@@ -1,9 +1,3 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Simulateur valorisation restaurant</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#fafafa;color:#1e1e1e;line-height:1.6;padding:20px}
@@ -39,7 +33,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .alert-warning{background:#fff3e0;color:#e65100;border-left:4px solid #f57c00}
 .alert-success{background:#e8f5e9;color:#2e7d32;border-left:4px solid #4caf50}
 .alert-danger{background:#ffebee;color:#c62828;border-left:4px solid #f44336}
-.alert-info{background:#e3f2fd;color:#1565c0;border-left:4px solid #1976d2}
 .info-box{margin-top:12px;padding:12px;background:#f0f8ff;border-left:4px solid #1976d2;border-radius:6px;font-size:13px}
 .info-ratio{font-weight:600;color:#1565c0}
 .contact-intro{background:#fafef0;padding:20px;border-radius:12px;border:2px solid #c4e913;margin-bottom:24px;text-align:center}
@@ -97,13 +90,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
 footer{background:#f5f5f5;padding:24px;font-size:13px;color:#666;line-height:1.8;border-top:1px solid #e5e5e5}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid #1e1e1e;border-radius:50%;border-top-color:transparent;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.save-indicator{position:fixed;bottom:20px;right:20px;background:#1e1e1e;color:#c4e913;padding:12px 20px;border-radius:8px;font-size:13px;display:none;animation:slideIn .3s}
-@keyframes slideIn{from{transform:translateY(100px)}to{transform:translateY(0)}}
 @media(max-width:640px){.valuation-range,.cta-section,.button-group{flex-direction:column}.progress-step{font-size:10px;padding:12px 4px}.narrative-tabs{flex-wrap:wrap}.cta-hero .cta-features{grid-template-columns:1fr}}
 @media print{body{background:#fff}.progress-bar,.button-group,.cta-section,.btn-copy,.btn-export,.cta-hero{display:none}}
 </style>
-</head>
-<body>
 <div class="container">
 <header>
 <h1>Simulateur de valorisation restaurant</h1>
@@ -404,7 +393,6 @@ Vos données sont sécurisées et utilisées uniquement pour vous recontacter
 </div>
 <footer><strong>Disclaimer :</strong> Estimation indicative. Accompagnement avocat recommandé.</footer>
 </div>
-<div class="save-indicator" id="save-indicator">💾 Sauvegarde</div>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
@@ -417,7 +405,7 @@ function saveToLocalStorage(){try{localStorage.setItem('simulator_data',JSON.str
 ca_n:document.getElementById('ca_n').value,ca_n1:document.getElementById('ca_n1').value,
 ca_n2:document.getElementById('ca_n2').value,ebe:document.getElementById('ebe').value,
 loyer:document.getElementById('loyer').value,nb_salaries:document.getElementById('nb_salaries').value,
-timestamp:Date.now()}));showSaveIndicator()}catch(e){}}
+timestamp:Date.now()}))}catch(e){}}
 function loadFromLocalStorage(){try{const data=JSON.parse(localStorage.getItem('simulator_data'));
 if(data&&Date.now()-data.timestamp<86400000){
 if(data.ca_n)document.getElementById('ca_n').value=data.ca_n;
@@ -426,8 +414,6 @@ if(data.ca_n2)document.getElementById('ca_n2').value=data.ca_n2;
 if(data.ebe)document.getElementById('ebe').value=data.ebe;
 if(data.loyer)document.getElementById('loyer').value=data.loyer;
 if(data.nb_salaries)document.getElementById('nb_salaries').value=data.nb_salaries}}catch(e){}}
-function showSaveIndicator(){const ind=document.getElementById('save-indicator');
-ind.style.display='block';setTimeout(()=>ind.style.display='none',2000)}
 document.addEventListener('DOMContentLoaded',function(){
 loadFromLocalStorage();
 ['ca_n','ca_n1','ca_n2','ebe','loyer','nb_salaries'].forEach(id=>
@@ -521,7 +507,6 @@ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr('Email invalide');return f
 return true}
 function showErr(m){const e=document.getElementById('contact-error');e.textContent=m;e.style.display='block';
 setTimeout(()=>e.style.display='none',5000)}
-function showSuccess(m){const e=document.getElementById('contact-success');e.textContent=m;e.style.display='block'}
 document.addEventListener('change',e=>{if(e.target.type==='radio'){const name=e.target.name;
 document.querySelectorAll(`input[name="${name}"]`).forEach(i=>i.closest('.radio-option').classList.remove('selected'));
 e.target.closest('.radio-option').classList.add('selected')}});
@@ -804,5 +789,3 @@ renderResults(finalResult,caResult,ebeResult,adjData,checklist)},1000)}
 function formatEuro(amount){return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(amount)}
 function reset(){localStorage.removeItem('simulator_data');location.reload()}
 </script>
-</body>
-</html>
