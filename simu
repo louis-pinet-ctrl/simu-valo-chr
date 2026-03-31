@@ -79,9 +79,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .btn-whatsapp:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
 .btn-whatsapp-icon{font-size:24px}
 .cta-section{display:flex;gap:12px;margin-top:24px}
-.btn-cta{flex:1;padding:16px 24px;text-align:center;text-decoration:none;border-radius:8px;font-weight:600;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn-cta-secondary{background:#f5f5f5;color:#1e1e1e}
-.btn-cta-secondary:hover{background:#e5e5e5}
+.btn-cta{flex:1;padding:16px 24px;text-align:center;text-decoration:none;border-radius:8px;font-weight:600;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:8px;background:#f5f5f5;color:#1e1e1e}
+.btn-cta:hover{background:#e5e5e5}
 .ca-chart{height:200px;margin:16px 0;position:relative;display:flex;align-items:flex-end;gap:8px;padding:20px 0}
 .ca-bar{flex:1;background:#c4e913;border-radius:4px 4px 0 0;position:relative;transition:all .3s;min-height:20px}
 .ca-bar:hover{background:#b5d912}
@@ -91,7 +90,7 @@ footer{background:#f5f5f5;padding:24px;font-size:13px;color:#666;line-height:1.8
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid #1e1e1e;border-radius:50%;border-top-color:transparent;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:640px){.valuation-range,.cta-section,.button-group{flex-direction:column}.progress-step{font-size:10px;padding:12px 4px}.narrative-tabs{flex-wrap:wrap}.cta-hero .cta-features{grid-template-columns:1fr}}
-@media print{body{background:#fff}.progress-bar,.button-group,.cta-section,.btn-copy,.btn-export,.cta-hero{display:none}}
+@media print{.progress-bar,.button-group,.cta-section,.btn-copy,.btn-export,.cta-hero{display:none}}
 </style>
 <div class="container">
 <header>
@@ -384,7 +383,7 @@ Vos données sont sécurisées et utilisées uniquement pour vous recontacter
 <ul class="checklist" id="checklist"></ul>
 </div>
 <div class="cta-section">
-<button class="btn-cta btn-cta-secondary" onclick="window.print()">🖨 Imprimer</button>
+<button class="btn-cta" onclick="window.print()">🖨 Imprimer</button>
 </div>
 <div class="button-group" style="margin-top:24px">
 <button class="btn-secondary" onclick="reset()">Nouvelle simulation</button>
@@ -393,10 +392,9 @@ Vos données sont sécurisées et utilisées uniquement pour vous recontacter
 </div>
 <footer><strong>Disclaimer :</strong> Estimation indicative. Accompagnement avocat recommandé.</footer>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-emailjs.init("3MND6tW8YvzuBeowW");
+function loadScript(u){return new Promise(function(r,j){var s=document.createElement('script');s.src=u;s.onload=r;s.onerror=j;document.head.appendChild(s)})}
+Promise.all([loadScript('https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js'),loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')]).then(function(){emailjs.init("3MND6tW8YvzuBeowW")});
 let currentStep=1,calculationData={},narrativeText='',currentNarrativeType='complet';
 const COUT_ETP={brasserie:3200,traditionnel:3500,fastfood:2800,gastronomique:4000,darkkitchen:2500};
 function calcMS(n,seg){return Math.round(n*(COUT_ETP[seg]||3500)*12)}
@@ -576,19 +574,19 @@ loyerR=(d.loyer/d.ca_ref*100).toFixed(1);let pts=[];
 if(d.ca_n>0)pts.push(`chiffre d'affaires établi de ${formatEuro(d.ca_ref)}`);
 if(d.ebe>0){const rent=((d.ebe/d.ca_ref)*100).toFixed(1);
 pts.push(`rentabilité solide avec un EBE de ${formatEuro(d.ebe)} (${rent}% du CA)`)}
-if(d.localisation==='hypercentre')pts.push('emplacement premium en hypercentre à forte affluence');
+if(d.localisation==='hypercentre')pts.push('emplacement premium en hypercentre');
 else if(d.localisation==='centre')pts.push('emplacement centre-ville stratégique');
 if(d.bail_duree==='long')pts.push('bail commercial sécurisé avec plus de 6 ans restants');
 if(d.destination==='large')pts.push('destination du bail élargie incluant la vente à emporter');
-if(d.extraction==='conforme')pts.push('clause d\'extraction des équipements conforme et sécurisée');
+if(d.extraction==='conforme')pts.push('clause d\'extraction des équipements sécurisée');
 if(loyerR<8)pts.push(`charge locative maîtrisée à ${loyerR}% du CA (inférieure au marché)`);
-if(d.licence==='iv')pts.push('licence IV complète, actif rare valorisant significativement le fonds');
+if(d.licence==='iv')pts.push('licence IV complète, actif rare et valorisant');
 else if(d.licence==='iii')pts.push('licence III permettant la vente d\'alcools');
-if(d.terrasse==='oui')pts.push('terrasse autorisée générant un chiffre d\'affaires complémentaire');
-if(d.conformite==='ok')pts.push('conformité totale ERP, hygiène et accessibilité');
-if(d.dettes==='aucune')pts.push('situation financière saine sans dette sociale ni fiscale');
-if(d.litiges==='non')pts.push('absence de tout contentieux en cours');
-if(d.nb_salaries>0&&calcRatioMS(d.nb_salaries,d.ca_ref,d.segment)<35)pts.push('structure salariale optimisée et rentable');
+if(d.terrasse==='oui')pts.push('terrasse autorisée, CA complémentaire');
+if(d.conformite==='ok')pts.push('conformité totale ERP et hygiène');
+if(d.dettes==='aucune')pts.push('aucune dette sociale ni fiscale');
+if(d.litiges==='non')pts.push('aucun contentieux en cours');
+if(d.nb_salaries>0&&calcRatioMS(d.nb_salaries,d.ca_ref,d.segment)<35)pts.push('structure salariale optimisée');
 if(type==='annonce'){return`${segName.toUpperCase()} À CÉDER - ${formatEuro(finalR.mediane)}
 
 ${pts.map(p=>`✓ ${p.charAt(0).toUpperCase()+p.slice(1)}`).join('\n')}
@@ -605,15 +603,15 @@ Madame, Monsieur,
 
 Suite à notre échange, je vous confirme ma volonté de céder mon fonds de commerce actuellement exploité en ${segName}.
 
-Après une analyse approfondie du marché et en appliquant les méthodes de valorisation reconnues dans notre secteur (coefficient du chiffre d'affaires et multiple d'EBE), je valorise ce fonds de commerce entre ${formatEuro(finalR.basse)} et ${formatEuro(finalR.haute)}, avec une valorisation médiane de ${formatEuro(finalR.mediane)}.
+En appliquant les méthodes de valorisation reconnues (coefficient du CA et multiple d'EBE), je valorise ce fonds de commerce entre ${formatEuro(finalR.basse)} et ${formatEuro(finalR.haute)}, avec une valorisation médiane de ${formatEuro(finalR.mediane)}.
 
 Cette valorisation se justifie notamment par les atouts suivants :`;
 const ptsLst=pts.map((p,i)=>`${i+1}. ${p.charAt(0).toUpperCase()+p.slice(1)}`).join('\n');
-const concl=`\nCette estimation repose sur une méthodologie rigoureuse tenant compte des spécificités de l'établissement, de son positionnement et des conditions juridiques de cession.
+const concl=`\nCette estimation repose sur une méthodologie rigoureuse tenant compte des spécificités de l'établissement et des conditions juridiques de cession.
 
-Je reste naturellement à votre disposition pour vous transmettre le dossier complet (comptes détaillés, bail commercial, conformités) et organiser une visite des lieux à votre convenance.
+Je reste à votre disposition pour transmettre le dossier complet et organiser une visite à votre convenance.
 
-Dans l'attente de votre retour, je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.`;
+Dans l'attente de votre retour, veuillez agréer, Madame, Monsieur, mes salutations distinguées.`;
 return`${intro}\n\n${ptsLst}${concl}`}
 function genChecklist(d){const items=[];
 if(d.bail_duree==='court')items.push('Renouveler bail anticipé');
