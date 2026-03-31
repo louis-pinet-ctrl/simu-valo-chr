@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simulateur valorisation restaurant</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#fafafa;color:#1e1e1e;line-height:1.6;padding:20px}
+.container{max-width:800px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden}
+header{background:#1e1e1e;color:#fff;padding:32px 24px;text-align:center}
+header h1{font-size:24px;font-weight:600;margin-bottom:8px}
+header p{font-size:14px;opacity:.8}
+.progress-bar{display:flex;background:#f5f5f5}
+.progress-step{flex:1;padding:16px 8px;text-align:center;font-size:12px;font-weight:500;color:#999;border-bottom:3px solid transparent;transition:all .3s}
+.progress-step.active{color:#1e1e1e;background:#fff;border-bottom-color:#c4e913}
+.progress-step.completed{color:#1e1e1e;background:#f9f9f9}
+.content{padding:32px 24px}
+.step{display:none}
+.step.active{display:block;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.form-group{margin-bottom:24px}
+label{display:block;font-weight:500;margin-bottom:8px;font-size:14px}
+input,select{width:100%;padding:12px 16px;border:2px solid #e5e5e5;border-radius:8px;font-size:15px;transition:border-color .3s;font-family:inherit}
+input:focus,select:focus{outline:0;border-color:#c4e913}
+.radio-group{display:flex;flex-direction:column;gap:12px}
+.radio-option{display:flex;align-items:center;padding:12px 16px;border:2px solid #e5e5e5;border-radius:8px;cursor:pointer;transition:all .3s}
+.radio-option:hover{border-color:#c4e913;background:#fafafa}
+.radio-option input[type=radio]{width:auto;margin-right:12px}
+.radio-option.selected{border-color:#c4e913;background:#fafef0}
+.button-group{display:flex;gap:12px;margin-top:32px}
+button{flex:1;padding:14px 24px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:all .3s;font-family:inherit}
+button:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:#c4e913;color:#1e1e1e}
+.btn-primary:hover:not(:disabled){background:#b5d912;transform:translateY(-1px)}
+.btn-secondary{background:#f5f5f5;color:#1e1e1e}
+.btn-secondary:hover{background:#e5e5e5}
+.alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px}
+.alert-warning{background:#fff3e0;color:#e65100;border-left:4px solid #f57c00}
+.alert-success{background:#e8f5e9;color:#2e7d32;border-left:4px solid #4caf50}
+.alert-danger{background:#ffebee;color:#c62828;border-left:4px solid #f44336}
+.alert-info{background:#e3f2fd;color:#1565c0;border-left:4px solid #1976d2}
+.info-box{margin-top:12px;padding:12px;background:#f0f8ff;border-left:4px solid #1976d2;border-radius:6px;font-size:13px}
+.info-ratio{font-weight:600;color:#1565c0}
+.contact-intro{background:#fafef0;padding:20px;border-radius:12px;border:2px solid #c4e913;margin-bottom:24px;text-align:center}
+.contact-intro h3{color:#1e1e1e;margin-bottom:8px;font-size:18px}
+.results-card{background:#fafafa;padding:24px;border-radius:12px;margin-bottom:24px;border:2px solid #e5e5e5}
+.results-card h3{font-size:18px;margin-bottom:16px;color:#1e1e1e}
+.valuation-range{display:flex;justify-content:space-between;align-items:center;margin:24px 0;padding:20px;background:linear-gradient(135deg,#f5f5f5 0%,#fff 100%);border-radius:12px;border:2px solid #c4e913}
+.val-item{text-align:center;flex:1}
+.val-label{font-size:12px;text-transform:uppercase;color:#666;margin-bottom:4px;font-weight:600}
+.val-amount{font-size:24px;font-weight:700;color:#1e1e1e}
+.val-median .val-amount{font-size:32px;color:#c4e913}
+.method-details{display:grid;gap:16px;margin-top:16px}
+.method-item{padding:16px;background:#fff;border-radius:8px;border-left:4px solid #c4e913}
+.method-item h4{font-size:14px;margin-bottom:8px;color:#666}
+.method-item .amount{font-size:20px;font-weight:600;color:#1e1e1e}
+.method-item .detail-text{font-size:13px;color:#666;margin-top:8px}
+.adjustments-table{width:100%;border-collapse:collapse;margin-top:16px}
+.adjustments-table th{text-align:left;padding:12px;background:#f5f5f5;font-size:13px;font-weight:600;border-bottom:2px solid #e5e5e5}
+.adjustments-table td{padding:12px;border-bottom:1px solid #f0f0f0;font-size:14px}
+.adjustments-table .positive{color:#2e7d32}
+.adjustments-table .negative{color:#c62828}
+.checklist{list-style:none;padding:0}
+.checklist li{padding:12px;margin-bottom:8px;background:#fff;border-radius:8px;border-left:4px solid #c4e913;font-size:14px}
+.checklist li:before{content:"→ ";font-weight:700;color:#c4e913;margin-right:8px}
+.narrative-box{background:linear-gradient(135deg,#1e1e1e 0%,#2a2a2a 100%);color:#fff;padding:24px;border-radius:12px;margin-bottom:24px;border:2px solid #c4e913}
+.narrative-box h3{color:#c4e913;font-size:18px;margin-bottom:16px}
+.narrative-content{background:rgba(255,255,255,.05);padding:20px;border-radius:8px;margin-bottom:16px;font-size:14px;line-height:1.8;border:1px solid rgba(196,233,19,.2);white-space:pre-line;max-height:400px;overflow-y:auto}
+.narrative-tabs{display:flex;gap:8px;margin-bottom:16px}
+.narrative-tab{padding:8px 16px;background:rgba(255,255,255,.1);border:1px solid rgba(196,233,19,.3);border-radius:6px;cursor:pointer;font-size:13px;transition:all .3s}
+.narrative-tab.active{background:#c4e913;color:#1e1e1e;border-color:#c4e913}
+.btn-copy{background:#c4e913;color:#1e1e1e;padding:12px 24px;border:none;border-radius:8px;font-weight:600;cursor:pointer;transition:all .3s;margin-right:8px}
+.btn-copy:hover{background:#b5d912}
+.btn-export{background:#fff;color:#1e1e1e;padding:12px 24px;border:2px solid #c4e913;border-radius:8px;font-weight:600;cursor:pointer;transition:all .3s}
+.btn-export:hover{background:#fafef0}
+.copy-success{display:none;color:#c4e913;font-size:13px;margin-top:8px}
+.copy-success.show{display:inline}
+.cta-hero{background:linear-gradient(135deg,#c4e913 0%,#b5d912 100%);padding:32px;border-radius:16px;margin:32px 0;text-align:center;box-shadow:0 8px 24px rgba(196,233,19,.3);border:3px solid #1e1e1e}
+.cta-hero h3{font-size:24px;font-weight:700;color:#1e1e1e;margin-bottom:12px}
+.cta-hero p{font-size:16px;color:#1e1e1e;margin-bottom:24px;line-height:1.6}
+.cta-hero .cta-features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;text-align:left}
+.cta-feature{background:rgba(30,30,30,.05);padding:16px;border-radius:8px;font-size:14px;color:#1e1e1e}
+.cta-feature:before{content:"✓ ";font-weight:700;color:#1e1e1e;margin-right:8px}
+.btn-whatsapp{display:inline-flex;align-items:center;gap:12px;background:#1e1e1e;color:#c4e913;padding:18px 36px;border-radius:12px;font-size:18px;font-weight:700;text-decoration:none;transition:all .3s;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.btn-whatsapp:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.btn-whatsapp-icon{font-size:24px}
+.cta-section{display:flex;gap:12px;margin-top:24px}
+.btn-cta{flex:1;padding:16px 24px;text-align:center;text-decoration:none;border-radius:8px;font-weight:600;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-cta-secondary{background:#f5f5f5;color:#1e1e1e}
+.btn-cta-secondary:hover{background:#e5e5e5}
+.ca-chart{height:200px;margin:16px 0;position:relative;display:flex;align-items:flex-end;gap:8px;padding:20px 0}
+.ca-bar{flex:1;background:#c4e913;border-radius:4px 4px 0 0;position:relative;transition:all .3s;min-height:20px}
+.ca-bar:hover{background:#b5d912}
+.ca-bar-label{position:absolute;bottom:-25px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;white-space:nowrap}
+.ca-bar-value{position:absolute;top:-25px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:600;color:#1e1e1e;white-space:nowrap}
+footer{background:#f5f5f5;padding:24px;font-size:13px;color:#666;line-height:1.8;border-top:1px solid #e5e5e5}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #1e1e1e;border-radius:50%;border-top-color:transparent;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.save-indicator{position:fixed;bottom:20px;right:20px;background:#1e1e1e;color:#c4e913;padding:12px 20px;border-radius:8px;font-size:13px;display:none;animation:slideIn .3s}
+@keyframes slideIn{from{transform:translateY(100px)}to{transform:translateY(0)}}
+@media(max-width:640px){.valuation-range,.cta-section,.button-group{flex-direction:column}.progress-step{font-size:10px;padding:12px 4px}.narrative-tabs{flex-wrap:wrap}.cta-hero .cta-features{grid-template-columns:1fr}}
+@media print{body{background:#fff}.progress-bar,.button-group,.cta-section,.btn-copy,.btn-export,.cta-hero{display:none}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>Simulateur de valorisation restaurant</h1>
+<p>Estimation indicative (non opposable)</p>
+</header>
+<div class="progress-bar">
+<div class="progress-step active" data-step="1">1. Financier</div>
+<div class="progress-step" data-step="2">2. Profil</div>
+<div class="progress-step" data-step="3">3. Bail</div>
+<div class="progress-step" data-step="4">4. Juridique</div>
+<div class="progress-step" data-step="5">5. Contact</div>
+</div>
+<div class="content">
+<div class="step active" data-step="1">
+<h2 style="margin-bottom:24px">Données financières</h2>
+<div class="form-group">
+<label for="ca_n">CA HT année N (€) *</label>
+<input type="number" id="ca_n" required min="0" step="1000">
+</div>
+<div class="form-group">
+<label for="ca_n1">CA HT année N-1 (€)</label>
+<input type="number" id="ca_n1" min="0" step="1000">
+</div>
+<div class="form-group">
+<label for="ca_n2">CA HT année N-2 (€)</label>
+<input type="number" id="ca_n2" min="0" step="1000">
+</div>
+<div class="form-group">
+<label for="ebe">EBE retraité annuel (€) - optionnel</label>
+<input type="number" id="ebe" min="0" step="1000">
+<div id="ebe-warning" class="alert alert-danger" style="display:none;margin-top:8px"></div>
+</div>
+<div class="form-group">
+<label for="loyer">Loyer annuel charges comprises (€) *</label>
+<input type="number" id="loyer" min="0" step="1000" required>
+<div class="info-box" id="loyer-info" style="display:none">
+<div>Ratio loyer/CA : <span class="info-ratio" id="loyer-ratio">-</span></div>
+<div style="margin-top:4px;font-size:12px;color:#555" id="loyer-comment"></div>
+</div>
+<div id="loyer-warning" class="alert alert-danger" style="display:none;margin-top:8px"></div>
+</div>
+<div class="form-group">
+<label for="nb_salaries">Nombre de salariés (ETP) - optionnel</label>
+<input type="number" id="nb_salaries" min="0" step="0.5">
+<div class="info-box" id="salaries-info" style="display:none">
+<div><strong>Masse salariale estimée :</strong> <span class="info-ratio" id="masse-salariale-montant">-</span></div>
+<div style="margin-top:8px">Ratio/CA : <span class="info-ratio" id="ratio-masse-salariale">-</span></div>
+<div style="margin-top:4px;font-size:12px;color:#555" id="masse-salariale-comment"></div>
+</div>
+</div>
+<div class="button-group">
+<button class="btn-primary" onclick="nextStep()">Suivant</button>
+</div>
+</div>
+<div class="step" data-step="2">
+<h2 style="margin-bottom:24px">Profil & localisation</h2>
+<div class="form-group">
+<label>Segment d'activité *</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="segment" value="brasserie" required><span>Brasserie / Bar</span></label>
+<label class="radio-option"><input type="radio" name="segment" value="traditionnel"><span>Restaurant traditionnel</span></label>
+<label class="radio-option"><input type="radio" name="segment" value="fastfood"><span>Fast-food / QSR</span></label>
+<label class="radio-option"><input type="radio" name="segment" value="gastronomique"><span>Gastronomique</span></label>
+<label class="radio-option"><input type="radio" name="segment" value="darkkitchen"><span>Dark kitchen</span></label>
+</div>
+</div>
+<div class="form-group">
+<label>Localisation *</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="localisation" value="hypercentre" required><span>Hypercentre</span></label>
+<label class="radio-option"><input type="radio" name="localisation" value="centre"><span>Centre-ville</span></label>
+<label class="radio-option"><input type="radio" name="localisation" value="peripherie"><span>Périphérie</span></label>
+<label class="radio-option"><input type="radio" name="localisation" value="fragile"><span>Zone fragile</span></label>
+</div>
+</div>
+<div class="form-group">
+<label>Terrasse ?</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="terrasse" value="oui"><span>Oui</span></label>
+<label class="radio-option"><input type="radio" name="terrasse" value="non" checked><span>Non</span></label>
+</div>
+</div>
+<div class="button-group">
+<button class="btn-secondary" onclick="prevStep()">Précédent</button>
+<button class="btn-primary" onclick="nextStep()">Suivant</button>
+</div>
+</div>
+<div class="step" data-step="3">
+<h2 style="margin-bottom:24px">Bail commercial</h2>
+<div class="form-group">
+<label>Durée restante du bail *</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="bail_duree" value="court" required><span>< 3 ans</span></label>
+<label class="radio-option"><input type="radio" name="bail_duree" value="moyen"><span>3-6 ans</span></label>
+<label class="radio-option"><input type="radio" name="bail_duree" value="long"><span>≥ 6 ans</span></label>
+</div>
+<div id="bail-warning" class="alert alert-danger" style="display:none;margin-top:8px"></div>
+</div>
+<div class="form-group">
+<label>Destination du bail</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="destination" value="etroite"><span>Étroite</span></label>
+<label class="radio-option"><input type="radio" name="destination" value="adaptee" checked><span>Adaptée</span></label>
+<label class="radio-option"><input type="radio" name="destination" value="large"><span>Large (VAE)</span></label>
+</div>
+</div>
+<div class="form-group">
+<label>Agrément cession fonds</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="agrement_fdc" value="oui"><span>Oui</span></label>
+<label class="radio-option"><input type="radio" name="agrement_fdc" value="non" checked><span>Non</span></label>
+</div>
+</div>
+<div class="form-group">
+<label>Agrément cession droit au bail</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="agrement_dab" value="oui"><span>Oui</span></label>
+<label class="radio-option"><input type="radio" name="agrement_dab" value="non" checked><span>Non</span></label>
+</div>
+</div>
+<div class="form-group">
+<label>Indexation loyer</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="indexation" value="annuelle" checked><span>Annuelle</span></label>
+<label class="radio-option"><input type="radio" name="indexation" value="triennale"><span>Triennale</span></label>
+</div>
+</div>
+<div class="form-group" id="derniere-revision-group" style="display:none">
+<label>Dernière révision</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="derniere_revision" value="recente"><span>< 3 ans</span></label>
+<label class="radio-option"><input type="radio" name="derniere_revision" value="ancienne"><span>≥ 3 ans</span></label>
+</div>
+</div>
+<div class="form-group">
+<label>Extraction éléments corporels</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="extraction" value="incertaine"><span>Incertaine</span></label>
+<label class="radio-option"><input type="radio" name="extraction" value="conforme" checked><span>Conforme</span></label>
+</div>
+</div>
+<div class="form-group">
+<label>Loyer vs marché</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="loyer_marche" value="superieur"><span>Supérieur</span></label>
+<label class="radio-option"><input type="radio" name="loyer_marche" value="aligne" checked><span>Aligné</span></label>
+<label class="radio-option"><input type="radio" name="loyer_marche" value="inferieur"><span>Inférieur</span></label>
+</div>
+</div>
+<div class="button-group">
+<button class="btn-secondary" onclick="prevStep()">Précédent</button>
+<button class="btn-primary" onclick="nextStep()">Suivant</button>
+</div>
+</div>
+<div class="step" data-step="4">
+<h2 style="margin-bottom:24px">Aspects juridiques</h2>
+<div class="form-group">
+<label>Conformité ERP/Hygiène</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="conformite" value="reserves"><span>Réserves</span></label>
+<label class="radio-option"><input type="radio" name="conformite" value="ok" checked><span>Conforme</span></label>
+</div>
+</div>
+<div class="form-group">
+<label>Litiges en cours</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="litiges" value="oui"><span>Oui</span></label>
+<label class="radio-option"><input type="radio" name="litiges" value="non" checked><span>Non</span></label>
+</div>
+</div>
+<div class="form-group">
+<label>Licence restaurant</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="licence" value="iv"><span>Licence IV</span></label>
+<label class="radio-option"><input type="radio" name="licence" value="iii"><span>Licence III</span></label>
+<label class="radio-option"><input type="radio" name="licence" value="petite" checked><span>Sans licence</span></label>
+</div>
+</div>
+<div class="form-group">
+<label>Dettes sociales/fiscales</label>
+<div class="radio-group">
+<label class="radio-option"><input type="radio" name="dettes" value="importantes"><span>Importantes</span></label>
+<label class="radio-option"><input type="radio" name="dettes" value="legeres"><span>Légères</span></label>
+<label class="radio-option"><input type="radio" name="dettes" value="aucune" checked><span>Aucune</span></label>
+</div>
+</div>
+<div class="button-group">
+<button class="btn-secondary" onclick="prevStep()">Précédent</button>
+<button class="btn-primary" onclick="nextStep()">Suivant</button>
+</div>
+</div>
+<div class="step" data-step="5">
+<div class="contact-intro">
+<h3>🎯 Coordonnées obligatoires</h3>
+<p>Renseignez vos informations pour accéder à votre valorisation</p>
+</div>
+<h2 style="margin-bottom:24px">Vos coordonnées</h2>
+<div class="form-group">
+<label for="profil_utilisateur">Vous êtes *</label>
+<select id="profil_utilisateur" required>
+<option value="">-- Sélectionnez --</option>
+<option value="restaurateur">Restaurateur / Exploitant</option>
+<option value="franchisé">Franchisé</option>
+<option value="expert-comptable">Expert-comptable</option>
+<option value="agent-immobilier">Agent immobilier</option>
+<option value="avocat">Avocat</option>
+<option value="conseiller">Conseiller en cession/reprise</option>
+<option value="investisseur">Investisseur</option>
+<option value="autre">Autre</option>
+</select>
+</div>
+<div class="form-group">
+<label for="nom">Nom *</label>
+<input type="text" id="nom" required>
+</div>
+<div class="form-group">
+<label for="prenom">Prénom *</label>
+<input type="text" id="prenom" required>
+</div>
+<div class="form-group">
+<label for="telephone">Téléphone *</label>
+<input type="tel" id="telephone" required placeholder="06 12 34 56 78">
+</div>
+<div class="form-group">
+<label for="email">Email *</label>
+<input type="email" id="email" required>
+</div>
+<div id="contact-error" class="alert alert-warning" style="display:none"></div>
+<div id="contact-success" class="alert alert-success" style="display:none"></div>
+<div class="button-group">
+<button class="btn-secondary" onclick="prevStep()">Précédent</button>
+<button class="btn-primary" id="btn-calculate" onclick="calculate()">
+<span id="btn-text">Voir ma valorisation</span>
+<span id="btn-spinner" style="display:none" class="spinner"></span>
+</button>
+</div>
+<p style="font-size:12px;color:#999;margin-top:16px;text-align:center">
+Vos données sont sécurisées et utilisées uniquement pour vous recontacter
+</p>
+</div>
+<div class="step" id="results" style="display:none">
+<h2 style="margin-bottom:24px">Résultats</h2>
+<div class="results-card">
+<h3>Valorisation finale</h3>
+<div class="valuation-range" id="final-range"></div>
+<div id="ca-evolution" style="display:none">
+<h4 style="margin:20px 0 10px;font-size:14px;color:#666">Évolution CA sur 3 ans</h4>
+<div class="ca-chart" id="ca-chart"></div>
+</div>
+</div>
+<div class="cta-hero">
+<h3>🚀 Sécurisez votre transmission</h3>
+<p>Cette valorisation est un premier pas. Pour maximiser le prix de cession et éviter les pièges juridiques, un accompagnement expert est indispensable.</p>
+<div class="cta-features">
+<div class="cta-feature">Audit juridique du bail commercial</div>
+<div class="cta-feature">Optimisation des clauses de cession</div>
+<div class="cta-feature">Négociation avec le bailleur</div>
+<div class="cta-feature">Rédaction acte de cession sécurisé</div>
+</div>
+<a href="https://wa.me/33686259294?text=Bonjour,%20je%20viens%20de%20réaliser%20une%20simulation%20de%20valorisation%20et%20souhaite%20échanger%20sur%20l'accompagnement%20juridique%20de%20ma%20cession." target="_blank" class="btn-whatsapp">
+<span class="btn-whatsapp-icon">💬</span>
+<span>Échanger sur WhatsApp (réponse sous 2h)</span>
+</a>
+</div>
+<div class="narrative-box">
+<h3>📝 Argumentaire de cession</h3>
+<div class="narrative-tabs">
+<div class="narrative-tab active" onclick="switchNarrative('complet')">Version complète</div>
+<div class="narrative-tab" onclick="switchNarrative('annonce')">Annonce</div>
+</div>
+<div class="narrative-content" id="narrative-text"></div>
+<button class="btn-copy" onclick="copyNarrative()">📋 Copier</button>
+<button class="btn-export" onclick="exportPDF()">📄 Export PDF</button>
+<span class="copy-success" id="copy-success">✓ Copié</span>
+</div>
+<div class="results-card">
+<h3>Détail méthodes</h3>
+<div class="method-details" id="method-details"></div>
+</div>
+<div class="results-card">
+<h3>Ajustements</h3>
+<table class="adjustments-table" id="adjustments-table">
+<thead><tr><th>Critère</th><th>Impact</th><th>Montant</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+<div class="results-card">
+<h3>Checklist création valeur</h3>
+<ul class="checklist" id="checklist"></ul>
+</div>
+<div class="cta-section">
+<button class="btn-cta btn-cta-secondary" onclick="window.print()">🖨 Imprimer</button>
+</div>
+<div class="button-group" style="margin-top:24px">
+<button class="btn-secondary" onclick="reset()">Nouvelle simulation</button>
+</div>
+</div>
+</div>
+<footer><strong>Disclaimer :</strong> Estimation indicative. Accompagnement avocat recommandé.</footer>
+</div>
+<div class="save-indicator" id="save-indicator">💾 Sauvegarde</div>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+emailjs.init("3MND6tW8YvzuBeowW");
+let currentStep=1,calculationData={},narrativeText='',currentNarrativeType='complet';
+const COUT_ETP={brasserie:3200,traditionnel:3500,fastfood:2800,gastronomique:4000,darkkitchen:2500};
+function calcMS(n,seg){return Math.round(n*(COUT_ETP[seg]||3500)*12)}
+function calcRatioMS(n,ca,seg){return n<=0||ca<=0?0:(calcMS(n,seg)/ca*100)}
+function saveToLocalStorage(){try{localStorage.setItem('simulator_data',JSON.stringify({
+ca_n:document.getElementById('ca_n').value,ca_n1:document.getElementById('ca_n1').value,
+ca_n2:document.getElementById('ca_n2').value,ebe:document.getElementById('ebe').value,
+loyer:document.getElementById('loyer').value,nb_salaries:document.getElementById('nb_salaries').value,
+timestamp:Date.now()}));showSaveIndicator()}catch(e){}}
+function loadFromLocalStorage(){try{const data=JSON.parse(localStorage.getItem('simulator_data'));
+if(data&&Date.now()-data.timestamp<86400000){
+if(data.ca_n)document.getElementById('ca_n').value=data.ca_n;
+if(data.ca_n1)document.getElementById('ca_n1').value=data.ca_n1;
+if(data.ca_n2)document.getElementById('ca_n2').value=data.ca_n2;
+if(data.ebe)document.getElementById('ebe').value=data.ebe;
+if(data.loyer)document.getElementById('loyer').value=data.loyer;
+if(data.nb_salaries)document.getElementById('nb_salaries').value=data.nb_salaries}}catch(e){}}
+function showSaveIndicator(){const ind=document.getElementById('save-indicator');
+ind.style.display='block';setTimeout(()=>ind.style.display='none',2000)}
+document.addEventListener('DOMContentLoaded',function(){
+loadFromLocalStorage();
+['ca_n','ca_n1','ca_n2','ebe','loyer','nb_salaries'].forEach(id=>
+document.getElementById(id).addEventListener('input',saveToLocalStorage));
+document.querySelectorAll('input[name="indexation"]').forEach(i=>i.addEventListener('change',function(){
+document.getElementById('derniere-revision-group').style.display=this.value==='triennale'?'block':'none'}));
+const caInput=document.getElementById('ca_n'),loyerInput=document.getElementById('loyer'),
+nbInput=document.getElementById('nb_salaries'),ebeInput=document.getElementById('ebe'),
+segInputs=document.querySelectorAll('input[name="segment"]');
+function validateData(){
+const ca=parseFloat(caInput.value)||0,loyer=parseFloat(loyerInput.value)||0,
+ebe=parseFloat(ebeInput.value)||0;
+const ebeWarn=document.getElementById('ebe-warning'),loyerWarn=document.getElementById('loyer-warning');
+ebeWarn.style.display='none';loyerWarn.style.display='none';
+if(ebe>0&&ca>0){const ebeRatio=(ebe/ca*100);
+if(ebeRatio<5){ebeWarn.textContent='⚠️ EBE < 5% du CA : incohérent, vérifiez vos données';
+ebeWarn.style.display='block'}
+else if(ebeRatio>35){ebeWarn.textContent='⚠️ EBE > 35% du CA : exceptionnellement élevé, à vérifier';
+ebeWarn.style.display='block'}}
+if(loyer>0&&ca>0){const loyerRatio=(loyer/ca*100);
+if(loyerRatio>15){loyerWarn.textContent='⚠️ Loyer > 15% du CA : exploitation probablement non viable';
+loyerWarn.style.display='block'}}}
+function updateLoyer(){
+const ca=parseFloat(caInput.value)||0,loyer=parseFloat(loyerInput.value)||0,
+infoDiv=document.getElementById('loyer-info'),ratioSpan=document.getElementById('loyer-ratio'),
+commentDiv=document.getElementById('loyer-comment');validateData();
+if(ca>0&&loyer>0){const ratio=(loyer/ca*100).toFixed(1);ratioSpan.textContent=ratio+' %';
+infoDiv.style.display='block';
+if(ratio<7){commentDiv.textContent='✓ Excellent (bas de marché)';commentDiv.style.color='#2e7d32'}
+else if(ratio<=8){commentDiv.textContent='✓ Normal';commentDiv.style.color='#1565c0'}
+else if(ratio<=9){commentDiv.textContent='⚠ Élevé';commentDiv.style.color='#f57c00'}
+else{commentDiv.textContent='⚠ Très élevé (impact négatif sur valorisation)';commentDiv.style.color='#c62828'}}
+else infoDiv.style.display='none'}
+function updateMS(){
+const ca=parseFloat(caInput.value)||0,nb=parseFloat(nbInput.value)||0,
+segChecked=document.querySelector('input[name="segment"]:checked'),
+infoDiv=document.getElementById('salaries-info'),montantSpan=document.getElementById('masse-salariale-montant'),
+ratioSpan=document.getElementById('ratio-masse-salariale'),commentDiv=document.getElementById('masse-salariale-comment');
+if(nb>0&&ca>0&&segChecked){const seg=segChecked.value,ms=calcMS(nb,seg),
+ratioMS=calcRatioMS(nb,ca,seg).toFixed(1);
+montantSpan.textContent=formatEuro(ms)+'/an';ratioSpan.textContent=ratioMS+'%';
+infoDiv.style.display='block';
+let ratioIdeal='30-38%';
+if(seg==='fastfood'||seg==='darkkitchen')ratioIdeal='25-30%';
+else if(seg==='gastronomique')ratioIdeal='38-45%';
+if(ratioMS<30){commentDiv.innerHTML=`✓ Très bonne maîtrise (ratio optimal pour rentabilité)<br><small>Repère secteur: ${ratioIdeal}</small>`;
+commentDiv.style.color='#2e7d32'}
+else if(ratioMS<=38){commentDiv.innerHTML=`⚖️ Zone d'équilibre (ratio sain)<br><small>Repère secteur: ${ratioIdeal}</small>`;
+commentDiv.style.color='#1565c0'}
+else if(ratioMS<=45){commentDiv.innerHTML=`⚠ Élevé (acceptable si positionnement premium)<br><small>Repère secteur: ${ratioIdeal}</small>`;
+commentDiv.style.color='#f57c00'}
+else{commentDiv.innerHTML=`⚠ Très élevé (impact négatif sur rentabilité et valorisation)<br><small>Repère secteur: ${ratioIdeal}</small>`;
+commentDiv.style.color='#c62828'}}else infoDiv.style.display='none'}
+caInput.addEventListener('input',()=>{updateLoyer();updateMS()});
+loyerInput.addEventListener('input',updateLoyer);ebeInput.addEventListener('input',validateData);
+nbInput.addEventListener('input',updateMS);segInputs.forEach(i=>i.addEventListener('change',updateMS))});
+function nextStep(){if(!validateStep(currentStep))return;
+document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
+document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.remove('active');
+document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.add('completed');
+currentStep++;document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.add('active');
+window.scrollTo(0,0)}
+function prevStep(){document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
+document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.remove('active');
+currentStep--;document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.remove('completed');
+document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.add('active');
+window.scrollTo(0,0)}
+function validateStep(s){
+if(s===1){const ca=parseFloat(document.getElementById('ca_n').value),
+loyer=parseFloat(document.getElementById('loyer').value);
+if(!ca||ca<=0){alert('Saisir CA année N');return false}
+if(!loyer||loyer<=0){alert('Saisir loyer');return false}}
+if(s===2){if(!document.querySelector('input[name="segment"]:checked')){alert('Sélectionner segment');return false}
+if(!document.querySelector('input[name="localisation"]:checked')){alert('Sélectionner localisation');return false}}
+if(s===3){const bailWarn=document.getElementById('bail-warning');bailWarn.style.display='none';
+if(!document.querySelector('input[name="bail_duree"]:checked')){alert('Sélectionner durée bail');return false}
+const bailDuree=document.querySelector('input[name="bail_duree"]:checked').value;
+if(bailDuree==='court'){bailWarn.textContent='⚠️ Bail < 3 ans : transmission difficile, renouvelez avant cession';
+bailWarn.style.display='block'}}
+if(s===5){
+const profil=document.getElementById('profil_utilisateur').value,
+nom=document.getElementById('nom').value.trim(),
+prenom=document.getElementById('prenom').value.trim(),
+tel=document.getElementById('telephone').value.trim(),
+email=document.getElementById('email').value.trim();
+if(!profil){showErr('Merci de sélectionner votre profil');return false}
+if(!nom||!prenom||!tel||!email){showErr('Tous les champs sont obligatoires');return false}
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr('Email invalide');return false}}
+return true}
+function showErr(m){const e=document.getElementById('contact-error');e.textContent=m;e.style.display='block';
+setTimeout(()=>e.style.display='none',5000)}
+function showSuccess(m){const e=document.getElementById('contact-success');e.textContent=m;e.style.display='block'}
+document.addEventListener('change',e=>{if(e.target.type==='radio'){const name=e.target.name;
+document.querySelectorAll(`input[name="${name}"]`).forEach(i=>i.closest('.radio-option').classList.remove('selected'));
+e.target.closest('.radio-option').classList.add('selected')}});
+function getSegName(s){const n={brasserie:'Brasserie',traditionnel:'Restaurant traditionnel',
+fastfood:'Fast-food',gastronomique:'Gastronomique',darkkitchen:'Dark kitchen'};return n[s]||s}
+function getProfilLabel(p){const labels={
+'restaurateur':'Restaurateur/Exploitant',
+'franchisé':'Franchisé',
+'expert-comptable':'Expert-comptable',
+'agent-immobilier':'Agent immobilier',
+'avocat':'Avocat',
+'conseiller':'Conseiller en cession/reprise',
+'investisseur':'Investisseur',
+'autre':'Autre'
+};return labels[p]||p}
+function calcCA(seg,caRef){const ranges={brasserie:{min:.50,med:.80,max:1.10},
+traditionnel:{min:.50,med:.65,max:.80},fastfood:{min:.30,med:.55,max:.80},
+gastronomique:{min:.30,med:.55,max:.80},darkkitchen:{min:.20,med:.40,max:.60}},coefs=ranges[seg];
+return{basse:Math.round(caRef*coefs.min),mediane:Math.round(caRef*coefs.med),
+haute:Math.round(caRef*coefs.max),coefMed:(coefs.med*100).toFixed(0)}}
+function calcEBE(ebe,profile,caData){let multiples,profileName;
+const hasGrowth=caData.ca_n1>0&&caData.ca_n2>0&&caData.ca_n>caData.ca_n1&&caData.ca_n1>caData.ca_n2;
+if(profile.isPrime){multiples={min:3.0,med:3.5,max:4.0};profileName='Site prime'}
+else if(profile.isRisky){multiples={min:1.5,med:2.0,max:2.5};profileName='Site risques'}
+else{multiples={min:2.5,med:3.0,max:3.5};profileName='Bon site'}
+if(hasGrowth){multiples.min+=.3;multiples.med+=.3;multiples.max+=.3;profileName+=' (croissance)'}
+return{basse:Math.round(ebe*multiples.min),mediane:Math.round(ebe*multiples.med),
+haute:Math.round(ebe*multiples.max),multipleMed:multiples.med.toFixed(1),profileName:profileName}}
+function determineProfile(d){const isPrime=(d.bail_duree==='long'&&d.extraction==='conforme'&&
+d.terrasse==='oui'&&d.localisation==='hypercentre');
+const isRisky=(d.bail_duree==='court'||d.extraction==='incertaine'||d.conformite==='reserves'||
+d.litiges==='oui'||d.localisation==='fragile'||d.dettes==='importantes');return{isPrime,isRisky}}
+function applyAdj(baseM,d){const adj=[],addAdj=(lbl,pct)=>{adj.push({label:lbl,pct:pct,
+amount:Math.round(baseM*pct/100)});return pct};let totalPct=0;
+if(d.localisation==='hypercentre')totalPct+=addAdj('Hypercentre',15);
+else if(d.localisation==='fragile')totalPct+=addAdj('Zone fragile',-15);
+if(d.bail_duree==='long')totalPct+=addAdj('Bail ≥6 ans',7.5);
+else if(d.bail_duree==='court')totalPct+=addAdj('Bail <3 ans',-7.5);
+if(d.destination==='large')totalPct+=addAdj('Destination large',5);
+else if(d.destination==='etroite')totalPct+=addAdj('Destination étroite',-7.5);
+if(d.agrement_fdc==='oui')totalPct+=addAdj('Agrément FDC',-2.5);
+if(d.agrement_dab==='oui')totalPct+=addAdj('Agrément DAB',-5);
+if(d.indexation==='triennale'&&d.derniere_revision==='ancienne')totalPct+=addAdj('Révision due',-2.5);
+if(d.extraction==='conforme')totalPct+=addAdj('Extraction sécurisée',10);
+else if(d.extraction==='incertaine')totalPct+=addAdj('Extraction incertaine',-12.5);
+const loyerR=(d.loyer/d.ca_ref*100);
+if(loyerR<7)totalPct+=addAdj(`Loyer favorable (${loyerR.toFixed(1)}%)`,5);
+else if(loyerR>9)totalPct+=addAdj(`Loyer élevé (${loyerR.toFixed(1)}%)`,Math.max(-15,Math.floor((9-loyerR))*2));
+if(d.loyer_marche==='inferieur')totalPct+=addAdj('Loyer < marché',5);
+else if(d.loyer_marche==='superieur')totalPct+=addAdj('Loyer > marché',-10);
+if(d.terrasse==='oui')totalPct+=addAdj('Terrasse',7.5);
+if(d.nb_salaries>0&&d.ca_ref>0){const ratioMS=calcRatioMS(d.nb_salaries,d.ca_ref,d.segment);
+if(ratioMS<30)totalPct+=addAdj(`MS optimisée (${ratioMS.toFixed(1)}%)`,5);
+else if(ratioMS>40)totalPct+=addAdj(`MS élevée (${ratioMS.toFixed(1)}%)`,-10)}
+if(d.licence==='iv')totalPct+=addAdj('Licence IV',10);
+else if(d.licence==='iii')totalPct+=addAdj('Licence III',5);
+if(d.dettes==='importantes')totalPct+=addAdj('Dettes importantes',-15);
+else if(d.dettes==='legeres')totalPct+=addAdj('Dettes légères',-5);
+if(d.conformite==='reserves')totalPct+=addAdj('Réserves ERP',-10);
+if(d.litiges==='oui')totalPct+=addAdj('Litiges',-10);
+if(totalPct>25)totalPct=25;if(totalPct<-25)totalPct=-25;return{adjustments:adj,totalPct:totalPct}}
+function aggregate(caR,ebeR){if(caR&&ebeR)return{basse:Math.round((caR.basse+ebeR.basse)/2),
+mediane:Math.round((caR.mediane+ebeR.mediane)/2),haute:Math.round((caR.haute+ebeR.haute)/2)};
+else if(caR)return{...caR};else if(ebeR)return{...ebeR};return null}
+function genNarrative(d,finalR,type='complet'){const segName=getSegName(d.segment),
+loyerR=(d.loyer/d.ca_ref*100).toFixed(1);let pts=[];
+if(d.ca_n>0)pts.push(`chiffre d'affaires établi de ${formatEuro(d.ca_ref)}`);
+if(d.ebe>0){const rent=((d.ebe/d.ca_ref)*100).toFixed(1);
+pts.push(`rentabilité solide avec un EBE de ${formatEuro(d.ebe)} (${rent}% du CA)`)}
+if(d.localisation==='hypercentre')pts.push('emplacement premium en hypercentre à forte affluence');
+else if(d.localisation==='centre')pts.push('emplacement centre-ville stratégique');
+if(d.bail_duree==='long')pts.push('bail commercial sécurisé avec plus de 6 ans restants');
+if(d.destination==='large')pts.push('destination du bail élargie incluant la vente à emporter');
+if(d.extraction==='conforme')pts.push('clause d\'extraction des équipements conforme et sécurisée');
+if(loyerR<8)pts.push(`charge locative maîtrisée à ${loyerR}% du CA (inférieure au marché)`);
+if(d.licence==='iv')pts.push('licence IV complète, actif rare valorisant significativement le fonds');
+else if(d.licence==='iii')pts.push('licence III permettant la vente d\'alcools');
+if(d.terrasse==='oui')pts.push('terrasse autorisée générant un chiffre d\'affaires complémentaire');
+if(d.conformite==='ok')pts.push('conformité totale ERP, hygiène et accessibilité');
+if(d.dettes==='aucune')pts.push('situation financière saine sans dette sociale ni fiscale');
+if(d.litiges==='non')pts.push('absence de tout contentieux en cours');
+if(d.nb_salaries>0&&calcRatioMS(d.nb_salaries,d.ca_ref,d.segment)<35)pts.push('structure salariale optimisée et rentable');
+if(type==='annonce'){return`${segName.toUpperCase()} À CÉDER - ${formatEuro(finalR.mediane)}
+
+${pts.map(p=>`✓ ${p.charAt(0).toUpperCase()+p.slice(1)}`).join('\n')}
+
+Fourchette de valorisation : ${formatEuro(finalR.basse)} - ${formatEuro(finalR.haute)}
+
+Dossier complet sur demande.
+Visites organisées pour acquéreurs qualifiés.
+
+Contact pour plus d'informations.`}
+const intro=`Objet : Proposition de cession - ${segName}
+
+Madame, Monsieur,
+
+Suite à notre échange, je vous confirme ma volonté de céder mon fonds de commerce actuellement exploité en ${segName}.
+
+Après une analyse approfondie du marché et en appliquant les méthodes de valorisation reconnues dans notre secteur (coefficient du chiffre d'affaires et multiple d'EBE), je valorise ce fonds de commerce entre ${formatEuro(finalR.basse)} et ${formatEuro(finalR.haute)}, avec une valorisation médiane de ${formatEuro(finalR.mediane)}.
+
+Cette valorisation se justifie notamment par les atouts suivants :`;
+const ptsLst=pts.map((p,i)=>`${i+1}. ${p.charAt(0).toUpperCase()+p.slice(1)}`).join('\n');
+const concl=`\nCette estimation repose sur une méthodologie rigoureuse tenant compte des spécificités de l'établissement, de son positionnement et des conditions juridiques de cession.
+
+Je reste naturellement à votre disposition pour vous transmettre le dossier complet (comptes détaillés, bail commercial, conformités) et organiser une visite des lieux à votre convenance.
+
+Dans l'attente de votre retour, je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.`;
+return`${intro}\n\n${ptsLst}${concl}`}
+function genChecklist(d){const items=[];
+if(d.bail_duree==='court')items.push('Renouveler bail anticipé');
+if(d.destination==='etroite')items.push('Élargir destination bail');
+if(d.agrement_fdc==='oui')items.push('Alléger agrément FDC');
+if(d.agrement_dab==='oui')items.push('Alléger agrément DAB');
+if(d.indexation==='triennale'&&d.derniere_revision==='ancienne')items.push('Anticiper révision');
+if(d.extraction==='incertaine')items.push('Sécuriser extraction');
+if((d.loyer/d.ca_ref*100)>9||d.loyer_marche==='superieur')items.push('Réaligner loyer');
+if(d.nb_salaries>0&&calcRatioMS(d.nb_salaries,d.ca_ref,d.segment)>40)items.push('Optimiser MS');
+if(d.dettes!=='aucune')items.push('Apurer dettes');
+if(d.conformite==='reserves')items.push('Purger réserves ERP');
+if(d.litiges==='oui')items.push('Résoudre litiges');
+if(d.localisation==='fragile')items.push('Valoriser atouts site');
+if(d.terrasse==='non')items.push('Demander terrasse');
+if(items.length===0){items.push('Fonds bien positionné');items.push('Maintenir qualité')}
+return items}
+function switchNarrative(type){currentNarrativeType=type;
+document.querySelectorAll('.narrative-tab').forEach(t=>t.classList.remove('active'));
+event.target.classList.add('active');
+narrativeText=genNarrative(calculationData.data,calculationData.finalResult,type);
+document.getElementById('narrative-text').textContent=narrativeText}
+function copyNarrative(){navigator.clipboard.writeText(narrativeText).then(()=>{
+const s=document.getElementById('copy-success');s.classList.add('show');
+setTimeout(()=>s.classList.remove('show'),3000)})}
+function exportPDF(){const{jsPDF}=window.jspdf;const doc=new jsPDF();
+doc.setFontSize(16);doc.text('Valorisation Restaurant',20,20);
+doc.setFontSize(12);const lines=doc.splitTextToSize(narrativeText,170);
+doc.text(lines,20,40);doc.save('valorisation.pdf')}
+function renderCAChart(d){if(!d.ca_n1||!d.ca_n2)return;
+const chartDiv=document.getElementById('ca-chart');chartDiv.innerHTML='';
+const data=[{label:'N-2',value:d.ca_n2},{label:'N-1',value:d.ca_n1},{label:'N',value:d.ca_n}];
+const maxVal=Math.max(...data.map(x=>x.value));
+data.forEach(item=>{const bar=document.createElement('div');bar.className='ca-bar';
+bar.style.height=`${(item.value/maxVal)*150}px`;
+const label=document.createElement('div');label.className='ca-bar-label';label.textContent=item.label;
+const value=document.createElement('div');value.className='ca-bar-value';
+value.textContent=formatEuro(item.value);bar.appendChild(label);bar.appendChild(value);
+chartDiv.appendChild(bar)});document.getElementById('ca-evolution').style.display='block'}
+function renderResults(finalR,caR,ebeR,adjData,checklist){
+narrativeText=genNarrative(calculationData.data,finalR,'complet');
+calculationData.finalResult=finalR;
+document.getElementById('narrative-text').textContent=narrativeText;
+document.getElementById('final-range').innerHTML=`<div class="val-item"><div class="val-label">Basse</div>
+<div class="val-amount">${formatEuro(finalR.basse)}</div></div>
+<div class="val-item val-median"><div class="val-label">Médiane</div>
+<div class="val-amount">${formatEuro(finalR.mediane)}</div></div>
+<div class="val-item"><div class="val-label">Haute</div>
+<div class="val-amount">${formatEuro(finalR.haute)}</div></div>`;
+renderCAChart(calculationData.data);
+let methodHTML='';
+if(caR){methodHTML+=`<div class="method-item"><h4>Méthode CA</h4>
+<div class="amount">${formatEuro(caR.basse)} - ${formatEuro(caR.haute)}</div>
+<div style="color:#666;font-size:13px;margin-top:4px">Médiane: ${formatEuro(caR.mediane)}</div>
+<div class="detail-text">Coef: ${caR.coefMed}% du CA</div></div>`}
+if(ebeR){methodHTML+=`<div class="method-item"><h4>Méthode EBE</h4>
+<div class="amount">${formatEuro(ebeR.basse)} - ${formatEuro(ebeR.haute)}</div>
+<div style="color:#666;font-size:13px;margin-top:4px">Médiane: ${formatEuro(ebeR.mediane)}</div>
+<div class="detail-text">Multiple: ×${ebeR.multipleMed} (${ebeR.profileName})</div></div>`}
+else methodHTML+=`<div class="alert alert-warning">EBE non renseigné.</div>`;
+const loyerR=(calculationData.data.loyer/calculationData.data.ca_ref*100).toFixed(1);
+methodHTML+=`<div class="method-item"><h4>Charge locative</h4><div class="amount">${loyerR}%</div></div>`;
+if(calculationData.data.nb_salaries>0){
+const ratioMS=calcRatioMS(calculationData.data.nb_salaries,calculationData.data.ca_ref,calculationData.data.segment).toFixed(1);
+methodHTML+=`<div class="method-item"><h4>Masse salariale</h4><div class="amount">${ratioMS}%</div></div>`}
+document.getElementById('method-details').innerHTML=methodHTML;
+const tbody=document.querySelector('#adjustments-table tbody');tbody.innerHTML='';
+adjData.adjustments.forEach(a=>{const tr=document.createElement('tr'),
+signClass=a.pct>=0?'positive':'negative',sign=a.pct>=0?'+':'';
+tr.innerHTML=`<td>${a.label}</td><td class="${signClass}">${sign}${a.pct.toFixed(1)}%</td>
+<td class="${signClass}">${sign}${formatEuro(a.amount)}</td>`;tbody.appendChild(tr)});
+const totalRow=document.createElement('tr');totalRow.style.fontWeight='bold';
+totalRow.style.borderTop='2px solid #1e1e1e';
+const totalSign=adjData.totalPct>=0?'+':'',totalClass=adjData.totalPct>=0?'positive':'negative',
+totalAmt=Math.round(calculationData.baseMedian*adjData.totalPct/100);
+totalRow.innerHTML=`<td>Total (±25%)</td><td class="${totalClass}">${totalSign}${adjData.totalPct.toFixed(1)}%</td>
+<td class="${totalClass}">${totalSign}${formatEuro(totalAmt)}</td>`;tbody.appendChild(totalRow);
+const checklistUl=document.getElementById('checklist');checklistUl.innerHTML='';
+checklist.forEach(item=>{const li=document.createElement('li');li.textContent=item;checklistUl.appendChild(li)});
+document.querySelector('.step.active')?.classList.remove('active');
+document.querySelectorAll('.step').forEach(s=>s.style.display='none');
+document.getElementById('results').style.display='block';window.scrollTo(0,0)}
+async function sendEmail(contactData,allData,finalResult){
+const serviceID='service_p4n5irf';
+const templateID='template_qmnw673';
+const params={
+profil_utilisateur:getProfilLabel(contactData.profil_utilisateur),
+nom:contactData.nom,
+prenom:contactData.prenom,
+telephone:contactData.telephone,
+email:contactData.email,
+ca_n:formatEuro(allData.ca_n),
+ca_n1:allData.ca_n1>0?formatEuro(allData.ca_n1):'Non renseigné',
+ca_n2:allData.ca_n2>0?formatEuro(allData.ca_n2):'Non renseigné',
+ebe:allData.ebe>0?formatEuro(allData.ebe):'Non renseigné',
+loyer:formatEuro(allData.loyer),
+nb_salaries:allData.nb_salaries>0?allData.nb_salaries:'Non renseigné',
+segment:getSegName(allData.segment),
+localisation:allData.localisation,
+terrasse:allData.terrasse==='oui'?'Oui':'Non',
+bail_duree:allData.bail_duree==='court'?'< 3 ans':allData.bail_duree==='moyen'?'3-6 ans':'≥ 6 ans',
+destination:allData.destination,
+agrement_fdc:allData.agrement_fdc==='oui'?'Oui':'Non',
+agrement_dab:allData.agrement_dab==='oui'?'Oui':'Non',
+indexation:allData.indexation,
+extraction:allData.extraction,
+loyer_marche:allData.loyer_marche,
+conformite:allData.conformite==='ok'?'Conforme':'Réserves',
+litiges:allData.litiges==='oui'?'Oui':'Non',
+licence:allData.licence==='iv'?'Licence IV':allData.licence==='iii'?'Licence III':'Sans licence',
+dettes:allData.dettes,
+valorisation_basse:formatEuro(finalResult.basse),
+valorisation_mediane:formatEuro(finalResult.mediane),
+valorisation_haute:formatEuro(finalResult.haute),
+date:new Date().toLocaleString('fr-FR')
+};
+try{
+await emailjs.send(serviceID,templateID,params);
+return true;
+}catch(e){
+console.error('Erreur envoi email:',e);
+return false;
+}}
+async function calculate(){if(!validateStep(5))return;
+const btn=document.getElementById('btn-calculate'),btnText=document.getElementById('btn-text'),
+btnSpinner=document.getElementById('btn-spinner');btn.disabled=true;btnText.style.display='none';
+btnSpinner.style.display='inline-block';
+const indexationValue=document.querySelector('input[name="indexation"]:checked').value;
+let derniereRevisionValue='recente';
+if(indexationValue==='triennale'){const c=document.querySelector('input[name="derniere_revision"]:checked');
+if(c)derniereRevisionValue=c.value}
+const data={ca_n:parseFloat(document.getElementById('ca_n').value)||0,
+ca_n1:parseFloat(document.getElementById('ca_n1').value)||0,
+ca_n2:parseFloat(document.getElementById('ca_n2').value)||0,
+ebe:parseFloat(document.getElementById('ebe').value)||0,
+loyer:parseFloat(document.getElementById('loyer').value)||0,
+nb_salaries:parseFloat(document.getElementById('nb_salaries').value)||0,
+segment:document.querySelector('input[name="segment"]:checked').value,
+localisation:document.querySelector('input[name="localisation"]:checked').value,
+terrasse:document.querySelector('input[name="terrasse"]:checked').value,
+bail_duree:document.querySelector('input[name="bail_duree"]:checked').value,
+destination:document.querySelector('input[name="destination"]:checked').value,
+agrement_fdc:document.querySelector('input[name="agrement_fdc"]:checked').value,
+agrement_dab:document.querySelector('input[name="agrement_dab"]:checked').value,
+indexation:indexationValue,derniere_revision:derniereRevisionValue,
+extraction:document.querySelector('input[name="extraction"]:checked').value,
+loyer_marche:document.querySelector('input[name="loyer_marche"]:checked').value,
+conformite:document.querySelector('input[name="conformite"]:checked').value,
+litiges:document.querySelector('input[name="litiges"]:checked').value,
+licence:document.querySelector('input[name="licence"]:checked').value,
+dettes:document.querySelector('input[name="dettes"]:checked').value};
+const contactData={
+profil_utilisateur:document.getElementById('profil_utilisateur').value,
+nom:document.getElementById('nom').value.trim(),
+prenom:document.getElementById('prenom').value.trim(),
+telephone:document.getElementById('telephone').value.trim(),
+email:document.getElementById('email').value.trim()};
+let caRef=data.ca_n,count=1;if(data.ca_n1>0){caRef+=data.ca_n1;count++}
+if(data.ca_n2>0){caRef+=data.ca_n2;count++}caRef=caRef/count;data.ca_ref=caRef;
+const caResult=calcCA(data.segment,caRef);let ebeResult=null;
+if(data.ebe>0){const profile=determineProfile(data);
+ebeResult=calcEBE(data.ebe,profile,data)}
+const baseResult=aggregate(caResult,ebeResult);
+calculationData.baseMedian=baseResult.mediane;calculationData.data=data;
+calculationData.caResult=caResult;calculationData.ebeResult=ebeResult;
+const adjData=applyAdj(baseResult.mediane,data);
+const adjFactor=1+(adjData.totalPct/100);
+const finalResult={basse:Math.round(baseResult.basse*adjFactor),
+mediane:Math.round(baseResult.mediane*adjFactor),haute:Math.round(baseResult.haute*adjFactor)};
+await sendEmail(contactData,data,finalResult);
+setTimeout(()=>{const checklist=genChecklist(data);
+renderResults(finalResult,caResult,ebeResult,adjData,checklist)},1000)}
+function formatEuro(amount){return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(amount)}
+function reset(){localStorage.removeItem('simulator_data');location.reload()}
+</script>
+</body>
+</html>
