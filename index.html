@@ -117,24 +117,24 @@ footer{background:#f5f5f5;padding:24px;font-size:13px;color:#666;line-height:1.8
 <h2 style="margin-bottom:24px">Données financières</h2>
 <div class="form-group">
 <label for="ca_n">CA HT année N (€) *</label>
-<input type="number" id="ca_n" required min="0" step="1000">
+<input type="text" inputmode="numeric" id="ca_n" required placeholder="ex : 450 000" autocomplete="off">
 </div>
 <div class="form-group">
 <label for="ca_n1">CA HT année N-1 (€)</label>
-<input type="number" id="ca_n1" min="0" step="1000">
+<input type="text" inputmode="numeric" id="ca_n1" placeholder="ex : 420 000" autocomplete="off">
 </div>
 <div class="form-group">
 <label for="ca_n2">CA HT année N-2 (€)</label>
-<input type="number" id="ca_n2" min="0" step="1000">
+<input type="text" inputmode="numeric" id="ca_n2" placeholder="ex : 400 000" autocomplete="off">
 </div>
 <div class="form-group">
 <label for="ebe">EBE retraité annuel (€) - optionnel</label>
-<input type="number" id="ebe" min="0" step="1000">
+<input type="text" inputmode="numeric" id="ebe" placeholder="ex : 60 000" autocomplete="off">
 <div id="ebe-warning" class="alert alert-danger" style="display:none;margin-top:8px"></div>
 </div>
 <div class="form-group">
 <label for="loyer">Loyer annuel charges comprises (€) *</label>
-<input type="number" id="loyer" min="0" step="1000" required>
+<input type="text" inputmode="numeric" id="loyer" required placeholder="ex : 36 000" autocomplete="off">
 <div class="info-box" id="loyer-info" style="display:none">
 <div>Ratio loyer/CA : <span class="info-ratio" id="loyer-ratio">-</span></div>
 <div style="margin-top:4px;font-size:12px;color:#555" id="loyer-comment"></div>
@@ -143,13 +143,14 @@ footer{background:#f5f5f5;padding:24px;font-size:13px;color:#666;line-height:1.8
 </div>
 <div class="form-group">
 <label for="nb_salaries">Nombre de salariés (ETP) - optionnel</label>
-<input type="number" id="nb_salaries" min="0" step="0.5">
+<input type="text" inputmode="decimal" id="nb_salaries" placeholder="ex : 4,5" autocomplete="off">
 <div class="info-box" id="salaries-info" style="display:none">
 <div><strong>Masse salariale estimée :</strong> <span class="info-ratio" id="masse-salariale-montant">-</span></div>
 <div style="margin-top:8px">Ratio/CA : <span class="info-ratio" id="ratio-masse-salariale">-</span></div>
 <div style="margin-top:4px;font-size:12px;color:#555" id="masse-salariale-comment"></div>
 </div>
 </div>
+<div id="step1-error" class="alert alert-danger" style="display:none"></div>
 <div class="button-group">
 <button class="btn-primary" onclick="nextStep()">Suivant</button>
 </div>
@@ -182,6 +183,7 @@ footer{background:#f5f5f5;padding:24px;font-size:13px;color:#666;line-height:1.8
 <label class="radio-option"><input type="radio" name="terrasse" value="non" checked><span>Non</span></label>
 </div>
 </div>
+<div id="step2-error" class="alert alert-danger" style="display:none"></div>
 <div class="button-group">
 <button class="btn-secondary" onclick="prevStep()">Précédent</button>
 <button class="btn-primary" onclick="nextStep()">Suivant</button>
@@ -249,6 +251,7 @@ footer{background:#f5f5f5;padding:24px;font-size:13px;color:#666;line-height:1.8
 <label class="radio-option"><input type="radio" name="loyer_marche" value="inferieur"><span>Inférieur</span></label>
 </div>
 </div>
+<div id="step3-error" class="alert alert-danger" style="display:none"></div>
 <div class="button-group">
 <button class="btn-secondary" onclick="prevStep()">Précédent</button>
 <button class="btn-primary" onclick="nextStep()">Suivant</button>
@@ -404,6 +407,9 @@ Vos données sont sécurisées et utilisées uniquement pour vous recontacter
 function loadScript(u){return new Promise(function(r,j){var s=document.createElement('script');s.src=u;s.onload=r;s.onerror=j;document.head.appendChild(s)})}
 Promise.all([loadScript('https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js'),loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')]).then(function(){emailjs.init("3MND6tW8YvzuBeowW")});
 let currentStep=1,calculationData={},narrativeText='',currentNarrativeType='complet';
+function toNum(v){if(v==null)return 0;v=String(v).replace(/[\s\u00a0\u202f€]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.');const n=parseFloat(v);return isFinite(n)&&n>0?n:0}
+function num(id){return toNum(document.getElementById(id).value)}
+function stepErr(s,m){const e=document.getElementById('step'+s+'-error');if(!e){alert(m);return}e.textContent=m;e.style.display='block';e.scrollIntoView({block:'nearest'});clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',6000)}
 const COUT_ETP={brasserie:3200,traditionnel:3500,fastfood:2800,gastronomique:4000,darkkitchen:2500};
 function calcMS(n,seg){return Math.round(n*(COUT_ETP[seg]||3500)*12)}
 function calcRatioMS(n,ca,seg){return n<=0||ca<=0?0:(calcMS(n,seg)/ca*100)}
@@ -430,8 +436,8 @@ const caInput=document.getElementById('ca_n'),loyerInput=document.getElementById
 nbInput=document.getElementById('nb_salaries'),ebeInput=document.getElementById('ebe'),
 segInputs=document.querySelectorAll('input[name="segment"]');
 function validateData(){
-const ca=parseFloat(caInput.value)||0,loyer=parseFloat(loyerInput.value)||0,
-ebe=parseFloat(ebeInput.value)||0;
+const ca=toNum(caInput.value),loyer=toNum(loyerInput.value),
+ebe=toNum(ebeInput.value);
 const ebeWarn=document.getElementById('ebe-warning'),loyerWarn=document.getElementById('loyer-warning');
 ebeWarn.style.display='none';loyerWarn.style.display='none';
 if(ebe>0&&ca>0){const ebeRatio=(ebe/ca*100);
@@ -443,7 +449,7 @@ if(loyer>0&&ca>0){const loyerRatio=(loyer/ca*100);
 if(loyerRatio>15){loyerWarn.textContent='⚠️ Loyer > 15% du CA : exploitation probablement non viable';
 loyerWarn.style.display='block'}}}
 function updateLoyer(){
-const ca=parseFloat(caInput.value)||0,loyer=parseFloat(loyerInput.value)||0,
+const ca=toNum(caInput.value),loyer=toNum(loyerInput.value),
 infoDiv=document.getElementById('loyer-info'),ratioSpan=document.getElementById('loyer-ratio'),
 commentDiv=document.getElementById('loyer-comment');validateData();
 if(ca>0&&loyer>0){const ratio=(loyer/ca*100).toFixed(1);ratioSpan.textContent=ratio+' %';
@@ -454,7 +460,7 @@ else if(ratio<=9){commentDiv.textContent='⚠ Élevé';commentDiv.style.color='#
 else{commentDiv.textContent='⚠ Très élevé (impact négatif sur valorisation)';commentDiv.style.color='#c62828'}}
 else infoDiv.style.display='none'}
 function updateMS(){
-const ca=parseFloat(caInput.value)||0,nb=parseFloat(nbInput.value)||0,
+const ca=toNum(caInput.value),nb=toNum(nbInput.value),
 segChecked=document.querySelector('input[name="segment"]:checked'),
 infoDiv=document.getElementById('salaries-info'),montantSpan=document.getElementById('masse-salariale-montant'),
 ratioSpan=document.getElementById('ratio-masse-salariale'),commentDiv=document.getElementById('masse-salariale-comment');
@@ -490,14 +496,13 @@ document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.r
 document.querySelector(`.progress-step[data-step="${currentStep}"]`).classList.add('active');
 window.scrollTo(0,0)}
 function validateStep(s){
-if(s===1){const ca=parseFloat(document.getElementById('ca_n').value),
-loyer=parseFloat(document.getElementById('loyer').value);
-if(!ca||ca<=0){alert('Saisir CA année N');return false}
-if(!loyer||loyer<=0){alert('Saisir loyer');return false}}
-if(s===2){if(!document.querySelector('input[name="segment"]:checked')){alert('Sélectionner segment');return false}
-if(!document.querySelector('input[name="localisation"]:checked')){alert('Sélectionner localisation');return false}}
+if(s===1){const ca=num('ca_n'),loyer=num('loyer');
+if(!ca){stepErr(1,'Merci de saisir le chiffre d\'affaires HT de l\'année N (montant en euros, ex : 450 000)');return false}
+if(!loyer){stepErr(1,'Merci de saisir le loyer annuel charges comprises (montant en euros, ex : 36 000)');return false}}
+if(s===2){if(!document.querySelector('input[name="segment"]:checked')){stepErr(2,'Merci de sélectionner le segment d\'activité');return false}
+if(!document.querySelector('input[name="localisation"]:checked')){stepErr(2,'Merci de sélectionner la localisation');return false}}
 if(s===3){const bailWarn=document.getElementById('bail-warning');bailWarn.style.display='none';
-if(!document.querySelector('input[name="bail_duree"]:checked')){alert('Sélectionner durée bail');return false}
+if(!document.querySelector('input[name="bail_duree"]:checked')){stepErr(3,'Merci de sélectionner la durée restante du bail');return false}
 const bailDuree=document.querySelector('input[name="bail_duree"]:checked').value;
 if(bailDuree==='court'){bailWarn.textContent='⚠️ Bail < 3 ans : transmission difficile, renouvelez avant cession';
 bailWarn.style.display='block'}}
@@ -751,12 +756,12 @@ const indexationValue=document.querySelector('input[name="indexation"]:checked')
 let derniereRevisionValue='recente';
 if(indexationValue==='triennale'){const c=document.querySelector('input[name="derniere_revision"]:checked');
 if(c)derniereRevisionValue=c.value}
-const data={ca_n:parseFloat(document.getElementById('ca_n').value)||0,
-ca_n1:parseFloat(document.getElementById('ca_n1').value)||0,
-ca_n2:parseFloat(document.getElementById('ca_n2').value)||0,
-ebe:parseFloat(document.getElementById('ebe').value)||0,
-loyer:parseFloat(document.getElementById('loyer').value)||0,
-nb_salaries:parseFloat(document.getElementById('nb_salaries').value)||0,
+const data={ca_n:num('ca_n'),
+ca_n1:num('ca_n1'),
+ca_n2:num('ca_n2'),
+ebe:num('ebe'),
+loyer:num('loyer'),
+nb_salaries:num('nb_salaries'),
 segment:document.querySelector('input[name="segment"]:checked').value,
 localisation:document.querySelector('input[name="localisation"]:checked').value,
 terrasse:document.querySelector('input[name="terrasse"]:checked').value,
