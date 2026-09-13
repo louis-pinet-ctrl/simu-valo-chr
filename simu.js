@@ -328,13 +328,18 @@ function switchRole(role){currentRole=role;
 document.querySelectorAll('.narrative-role').forEach(r=>r.classList.toggle('active',r.dataset.role===role));
 document.querySelectorAll('.narrative-tabs').forEach(t=>t.style.display=t.dataset.role===role?'':'none');
 switchNarrative(role==='repreneur'?'analyse':'complet')}
-function copyNarrative(){navigator.clipboard.writeText(narrativeText).then(()=>{
+const AVERTISSEMENT_MODELE=`---
+Modèle indicatif généré automatiquement par le simulateur de valorisation de Louis Pinet, avocat des restaurateurs. Il ne constitue ni une évaluation, ni un conseil juridique, ni une offre engageante. À faire relire par un avocat avant tout envoi.
+Prendre rendez-vous : https://calendly.com/contact-louispinetavocat/30min`;
+function texteExport(){return narrativeText+'\n\n'+AVERTISSEMENT_MODELE}
+function copyNarrative(){navigator.clipboard.writeText(texteExport()).then(()=>{
 const s=document.getElementById('copy-success');s.classList.add('show');
 setTimeout(()=>s.classList.remove('show'),3000)})}
 function exportPDF(){const{jsPDF}=window.jspdf;const doc=new jsPDF();
 doc.setFontSize(16);doc.text(currentRole==='repreneur'?'Reprise restaurant - Analyse':'Valorisation restaurant',20,20);
-doc.setFontSize(12);const lines=doc.splitTextToSize(narrativeText,170);
-doc.text(lines,20,40);doc.save(currentRole==='repreneur'?'reprise-restaurant.pdf':'valorisation.pdf')}
+doc.setFontSize(12);const lines=doc.splitTextToSize(texteExport(),170);let y=40;
+lines.forEach(l=>{if(y>280){doc.addPage();y=20}doc.text(l,20,y);y+=6});
+doc.save(currentRole==='repreneur'?'reprise-restaurant.pdf':'valorisation.pdf')}
 function renderCAChart(d){if(!d.ca_n1||!d.ca_n2)return;
 const chartDiv=document.getElementById('ca-chart');chartDiv.innerHTML='';
 const data=[{label:'N-2',value:d.ca_n2},{label:'N-1',value:d.ca_n1},{label:'N',value:d.ca_n}];
