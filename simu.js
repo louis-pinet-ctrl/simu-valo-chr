@@ -1,7 +1,7 @@
 function loadScript(u){return new Promise(function(r,j){var s=document.createElement('script');s.src=u;s.onload=r;s.onerror=j;document.head.appendChild(s)})}
 Promise.all([loadScript('https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js'),loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')]).then(function(){emailjs.init("3MND6tW8YvzuBeowW")});
 function scrollToSim(){const el=document.getElementById('simu-valo');if(el)el.scrollIntoView({block:'start',behavior:'smooth'})}
-let currentStep=1,calculationData={},narrativeText='',currentNarrativeType='complet';
+let currentStep=1,calculationData={},narrativeText='',currentNarrativeType='complet',currentRole='cedant';
 function toNum(v){if(v==null)return 0;v=String(v).replace(/[\s\u00a0\u202f€]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.');const n=parseFloat(v);return isFinite(n)&&n>0?n:0}
 function num(id){return toNum(document.getElementById(id).value)}
 function stepErr(s,m){const e=document.getElementById('step'+s+'-error');if(!e){alert(m);return}e.textContent=m;e.style.display='block';e.scrollIntoView({block:'nearest'});clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',6000)}
@@ -177,11 +177,11 @@ if(totalPct>25)totalPct=25;if(totalPct<-25)totalPct=-25;return{adjustments:adj,t
 function aggregate(caR,ebeR){if(caR&&ebeR)return{basse:Math.round((caR.basse+ebeR.basse)/2),
 mediane:Math.round((caR.mediane+ebeR.mediane)/2),haute:Math.round((caR.haute+ebeR.haute)/2)};
 else if(caR)return{...caR};else if(ebeR)return{...ebeR};return null}
-function genNarrative(d,finalR,type='complet'){const segName=getSegName(d.segment),
-loyerR=(d.loyer/d.ca_ref*100).toFixed(1);let pts=[];
+function listAtouts(d){const loyerR=(d.loyer/d.ca_ref*100).toFixed(1);let pts=[];
 if(d.ca_n>0)pts.push(`chiffre d'affaires établi de ${formatEuro(d.ca_ref)}`);
-if(d.ebe>0){const rent=((d.ebe/d.ca_ref)*100).toFixed(1);
-pts.push(`rentabilité solide avec un EBE de ${formatEuro(d.ebe)} (${rent}% du CA)`)}
+if(d.ebe>0){const rent=d.ebe/d.ca_ref*100;
+if(rent>=10)pts.push(`rentabilité solide avec un EBE de ${formatEuro(d.ebe)} (${rent.toFixed(1)}% du CA)`);
+else pts.push(`EBE de ${formatEuro(d.ebe)} (${rent.toFixed(1)}% du CA), marge de progression sur la rentabilité`)}
 if(d.localisation==='hypercentre')pts.push('emplacement premium en hypercentre');
 else if(d.localisation==='centre')pts.push('emplacement centre-ville stratégique');
 if(d.bail_duree==='long')pts.push('bail commercial sécurisé avec plus de 6 ans restants');
@@ -195,6 +195,89 @@ if(d.conformite==='ok')pts.push('conformité totale ERP et hygiène');
 if(d.dettes==='aucune')pts.push('aucune dette sociale ni fiscale');
 if(d.litiges==='non')pts.push('aucun contentieux en cours');
 if(d.nb_salaries>0&&calcRatioMS(d.nb_salaries,d.ca_ref,d.segment)<35)pts.push('structure salariale optimisée');
+return pts}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+function listVigilance(d){const loyerR=d.loyer/d.ca_ref*100,v=[];
+if(d.bail_duree==='court')v.push('bail avec moins de 3 ans restants : renouvellement à obtenir avant la cession ou en condition suspensive');
+else if(d.bail_duree==='moyen')v.push('bail avec 3 à 6 ans restants : anticiper les conditions du renouvellement');
+if(d.destination==='etroite')v.push('destination du bail étroite : tout changement d\'activité ou vente à emporter suppose l\'accord du bailleur');
+if(d.agrement_fdc==='oui')v.push('agrément du bailleur requis pour la cession du fonds : délai et risque de refus à intégrer');
+if(d.agrement_dab==='oui')v.push('agrément du bailleur requis pour la cession du droit au bail');
+if(d.indexation==='triennale'&&d.derniere_revision==='ancienne')v.push('révision triennale du loyer non appliquée depuis plus de 3 ans : hausse possible après la reprise');
+if(d.extraction==='incertaine')v.push('sort des équipements incertain au regard du bail : à clarifier avant tout engagement');
+if(loyerR>9)v.push(`loyer à ${loyerR.toFixed(1)}% du CA, au-dessus du seuil de confort du secteur`);
+if(d.loyer_marche==='superieur')v.push('loyer supérieur au marché : à faire peser sur le prix');
+if(d.nb_salaries>0){const r=calcRatioMS(d.nb_salaries,d.ca_ref,d.segment);
+if(r>40)v.push(`masse salariale estimée à ${r.toFixed(1)}% du CA : rentabilité sous pression, les contrats de travail sont repris de plein droit`)}
+if(d.dettes==='importantes')v.push('dettes sociales ou fiscales importantes : exiger les attestations de régularité et prévoir le séquestre du prix');
+else if(d.dettes==='legeres')v.push('dettes sociales ou fiscales signalées : attestations de régularité à demander');
+if(d.conformite==='reserves')v.push('réserves ERP ou hygiène : chiffrer les travaux de mise en conformité avant l\'offre');
+if(d.litiges==='oui')v.push('contentieux en cours : en identifier l\'objet et l\'enjeu financier');
+if(d.localisation==='fragile')v.push('zone commerciale fragile : vérifier la tendance du CA et l\'évolution du quartier');
+if(d.licence==='petite')v.push('absence de licence III ou IV : vente d\'alcool limitée, à budgéter si le projet en dépend');
+if(d.terrasse==='non')v.push('pas de terrasse : potentiel de CA limité aux couverts intérieurs');
+if(!(d.ebe>0))v.push('EBE non communiqué : la valorisation repose sur le seul CA, demander les trois derniers bilans');
+else{const rent=d.ebe/d.ca_ref*100;if(rent<10)v.push(`EBE à ${rent.toFixed(1)}% du CA : rentabilité faible, le prix doit rester cohérent avec la capacité de remboursement`)}
+if(d.ca_n1>0&&d.ca_n<d.ca_n1)v.push('chiffre d\'affaires en baisse sur le dernier exercice : en comprendre la cause avant de fixer le prix');
+return v}
+function listPieces(d){const p=['les trois derniers bilans et liasses fiscales, avec une situation comptable récente',
+'le bail commercial, ses avenants et le dernier avis d\'échéance de loyer',
+'le registre du personnel et les contrats de travail',
+'le dernier procès-verbal de la commission de sécurité et le dernier contrôle d\'hygiène',
+'les attestations de régularité sociale et fiscale',
+'l\'inventaire du matériel, en distinguant les biens financés ou loués',
+'l\'état des inscriptions de privilèges et nantissements délivré par le greffe'];
+if(d.licence!=='petite')p.push('l\'arrêté de licence et le permis d\'exploitation');
+if(d.litiges==='oui')p.push('les pièces des contentieux en cours');
+return p}
+function droitsEnregistrement(prix){let d=0;if(prix>23000)d+=(Math.min(prix,200000)-23000)*.03;
+if(prix>200000)d+=(prix-200000)*.05;return Math.round(d)}
+function genRepreneur(d,finalR,type){const segName=getSegName(d.segment),pts=listAtouts(d),vig=listVigilance(d),
+pieces=listPieces(d),offre=vig.length?finalR.basse:finalR.mediane;
+if(type==='analyse'){return`REPRISE ${segName.toUpperCase()} - ANALYSE AVANT OFFRE
+
+Fourchette de valeur : ${formatEuro(finalR.basse)} - ${formatEuro(finalR.haute)} (médiane ${formatEuro(finalR.mediane)})
+Offre d'ouverture suggérée : ${formatEuro(offre)}
+Prix cible : ${formatEuro(finalR.mediane)}. Plafond : ${formatEuro(finalR.haute)}, à ne dépasser qu'avec un élément nouveau.
+
+Points de vigilance (${vig.length}) :
+${vig.length?vig.map(v=>`⚠ ${cap(v)}`).join('\n'):'Aucun point bloquant sur les critères renseignés.'}
+
+Atouts confirmés à vérifier sur pièces :
+${pts.map(p=>`✓ ${cap(p)}`).join('\n')}
+
+Pièces à demander avant toute offre :
+${pieces.map(p=>`- ${cap(p)}`).join('\n')}
+
+À budgéter en plus du prix :
+- Droits d'enregistrement estimés sur le prix médian : ${formatEuro(droitsEnregistrement(finalR.mediane))} (barème de l'article 719 du CGI)
+- Frais d'acte, stock, trésorerie de départ et travaux éventuels
+- Prix séquestré pendant le délai d'opposition des créanciers après la cession`}
+const cond=['obtention du financement','audit du bail et des comptes'];
+if(d.agrement_fdc==='oui'||d.agrement_dab==='oui')cond.push('accord du bailleur');
+if(d.bail_duree==='court')cond.push('renouvellement du bail');
+cond.push('absence d\'inscription ou de passif non déclaré');
+return`Objet : Marque d'intérêt - reprise ${segName}
+
+Madame, Monsieur,
+
+Suite à notre échange, je vous confirme mon intérêt pour la reprise du fonds de commerce que vous exploitez en ${segName}.
+
+Sur la base des éléments communiqués et des méthodes de valorisation usuelles (coefficient du CA et multiple d'EBE), je situe la valeur du fonds entre ${formatEuro(finalR.basse)} et ${formatEuro(finalR.haute)}.
+${vig.length?`
+Les points suivants appellent une vérification et pèsent sur le prix :
+${vig.map((v,i)=>`${i+1}. ${cap(v)}`).join('\n')}
+`:''}
+Dans ces conditions, je suis en mesure de formuler une offre indicative de ${formatEuro(offre)}, sous réserve des conditions suspensives usuelles : ${cond.join(', ')}.
+
+Afin d'avancer, je vous remercie de me transmettre :
+${pieces.map(p=>`- ${cap(p)}`).join('\n')}
+
+Je reste à votre disposition pour une visite et un échange sur les modalités de reprise.
+
+Veuillez agréer, Madame, Monsieur, mes salutations distinguées.`}
+function genNarrative(d,finalR,type='complet'){if(type==='analyse'||type==='offre')return genRepreneur(d,finalR,type);
+const segName=getSegName(d.segment),pts=listAtouts(d);
 if(type==='annonce'){return`${segName.toUpperCase()} À CÉDER - ${formatEuro(finalR.mediane)}
 
 ${pts.map(p=>`✓ ${p.charAt(0).toUpperCase()+p.slice(1)}`).join('\n')}
@@ -238,17 +321,20 @@ if(d.terrasse==='non')items.push('Demander terrasse');
 if(items.length===0){items.push('Fonds bien positionné');items.push('Maintenir qualité')}
 return items}
 function switchNarrative(type){currentNarrativeType=type;
-document.querySelectorAll('.narrative-tab').forEach(t=>t.classList.remove('active'));
-event.target.classList.add('active');
+document.querySelectorAll('.narrative-tab').forEach(t=>t.classList.toggle('active',t.dataset.type===type));
 narrativeText=genNarrative(calculationData.data,calculationData.finalResult,type);
 document.getElementById('narrative-text').textContent=narrativeText}
+function switchRole(role){currentRole=role;
+document.querySelectorAll('.narrative-role').forEach(r=>r.classList.toggle('active',r.dataset.role===role));
+document.querySelectorAll('.narrative-tabs').forEach(t=>t.style.display=t.dataset.role===role?'':'none');
+switchNarrative(role==='repreneur'?'analyse':'complet')}
 function copyNarrative(){navigator.clipboard.writeText(narrativeText).then(()=>{
 const s=document.getElementById('copy-success');s.classList.add('show');
 setTimeout(()=>s.classList.remove('show'),3000)})}
 function exportPDF(){const{jsPDF}=window.jspdf;const doc=new jsPDF();
-doc.setFontSize(16);doc.text('Valorisation Restaurant',20,20);
+doc.setFontSize(16);doc.text(currentRole==='repreneur'?'Reprise restaurant - Analyse':'Valorisation restaurant',20,20);
 doc.setFontSize(12);const lines=doc.splitTextToSize(narrativeText,170);
-doc.text(lines,20,40);doc.save('valorisation.pdf')}
+doc.text(lines,20,40);doc.save(currentRole==='repreneur'?'reprise-restaurant.pdf':'valorisation.pdf')}
 function renderCAChart(d){if(!d.ca_n1||!d.ca_n2)return;
 const chartDiv=document.getElementById('ca-chart');chartDiv.innerHTML='';
 const data=[{label:'N-2',value:d.ca_n2},{label:'N-1',value:d.ca_n1},{label:'N',value:d.ca_n}];
@@ -260,9 +346,8 @@ const value=document.createElement('div');value.className='ca-bar-value';
 value.textContent=formatEuro(item.value);bar.appendChild(label);bar.appendChild(value);
 chartDiv.appendChild(bar)});document.getElementById('ca-evolution').style.display='block'}
 function renderResults(finalR,caR,ebeR,adjData,checklist){
-narrativeText=genNarrative(calculationData.data,finalR,'complet');
 calculationData.finalResult=finalR;
-document.getElementById('narrative-text').textContent=narrativeText;
+switchRole(calculationData.profil==='investisseur'?'repreneur':'cedant');
 document.getElementById('final-range').innerHTML=`<div class="val-item"><div class="val-label">Basse</div>
 <div class="val-amount">${formatEuro(finalR.basse)}</div></div>
 <div class="val-item val-median"><div class="val-label">Médiane</div>
@@ -383,7 +468,7 @@ const caResult=calcCA(data.segment,caRef);let ebeResult=null;
 if(data.ebe>0){const profile=determineProfile(data);
 ebeResult=calcEBE(data.ebe,profile,data)}
 const baseResult=aggregate(caResult,ebeResult);
-calculationData.baseMedian=baseResult.mediane;calculationData.data=data;
+calculationData.baseMedian=baseResult.mediane;calculationData.data=data;calculationData.profil=contactData.profil_utilisateur;
 calculationData.caResult=caResult;calculationData.ebeResult=ebeResult;
 const adjData=applyAdj(baseResult.mediane,data);
 const adjFactor=1+(adjData.totalPct/100);

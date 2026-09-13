@@ -276,10 +276,18 @@ Vos données sont sécurisées et utilisées uniquement pour vous recontacter
 </a>
 </div>
 <div class="narrative-box">
-<h3>📝 Argumentaire de cession</h3>
-<div class="narrative-tabs">
-<div class="narrative-tab active" onclick="switchNarrative('complet')">Version complète</div>
-<div class="narrative-tab" onclick="switchNarrative('annonce')">Annonce</div>
+<h3>📝 Argumentaire</h3>
+<div class="narrative-roles">
+<div class="narrative-role active" data-role="cedant" onclick="switchRole('cedant')">Je suis cédant</div>
+<div class="narrative-role" data-role="repreneur" onclick="switchRole('repreneur')">Je suis repreneur</div>
+</div>
+<div class="narrative-tabs" data-role="cedant">
+<div class="narrative-tab active" data-type="complet" onclick="switchNarrative('complet')">Courrier de cession</div>
+<div class="narrative-tab" data-type="annonce" onclick="switchNarrative('annonce')">Annonce</div>
+</div>
+<div class="narrative-tabs" data-role="repreneur" style="display:none">
+<div class="narrative-tab active" data-type="analyse" onclick="switchNarrative('analyse')">Analyse avant offre</div>
+<div class="narrative-tab" data-type="offre" onclick="switchNarrative('offre')">Courrier au cédant</div>
 </div>
 <div class="narrative-content" id="narrative-text"></div>
 <button class="btn-copy" onclick="copyNarrative()">📋 Copier</button>
