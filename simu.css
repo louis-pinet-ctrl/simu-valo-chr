@@ -76,6 +76,7 @@
 #simu-valo .cta-rdv p{font-size:15px;line-height:1.6;margin-bottom:20px;opacity:.9}
 #simu-valo .btn-rdv{display:inline-block;background:#c4e913;color:#1e1e1e;padding:18px 36px;border-radius:12px;font-size:18px;font-weight:700;text-decoration:none;transition:all .3s;box-shadow:0 6px 20px rgba(196,233,19,.35)}
 #simu-valo .btn-rdv:hover{transform:translateY(-2px);background:#b5d912}
+#simu-valo .cta-rdv-note{font-size:13px;line-height:1.6;margin:16px auto 0;max-width:520px;opacity:.85}
 #simu-valo .copy-success{display:none;color:#c4e913;font-size:13px;margin-top:8px}
 #simu-valo .copy-success.show{display:inline}
 #simu-valo .cta-section{display:flex;gap:12px;margin-top:24px}
