@@ -69,6 +69,10 @@
 #simu-valo .btn-copy:hover{background:#b5d912}
 #simu-valo .btn-export{background:#fff;color:#1e1e1e;padding:12px 24px;border:2px solid #c4e913;border-radius:8px;font-weight:600;cursor:pointer;transition:all .3s}
 #simu-valo .btn-export:hover{background:#fafef0}
+#simu-valo .narrative-disclaimer{margin-top:20px;padding:16px;background:#fff3e0;color:#1e1e1e;border-left:5px solid #f57c00;border-radius:8px;font-size:13px;line-height:1.6}
+#simu-valo .narrative-disclaimer strong{display:block;font-size:15px;color:#e65100;margin-bottom:6px}
+#simu-valo .btn-calendly{display:inline-block;margin-top:12px;padding:12px 20px;background:#1e1e1e;color:#c4e913;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;transition:all .3s}
+#simu-valo .btn-calendly:hover{background:#c4e913;color:#1e1e1e}
 #simu-valo .copy-success{display:none;color:#c4e913;font-size:13px;margin-top:8px}
 #simu-valo .copy-success.show{display:inline}
 #simu-valo .cta-hero{background:linear-gradient(135deg,#c4e913 0%,#b5d912 100%);padding:32px;border-radius:16px;margin:32px 0;text-align:center;box-shadow:0 8px 24px rgba(196,233,19,.3);border:3px solid #1e1e1e}
