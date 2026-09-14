@@ -1,15 +1,10 @@
 #simu-valo *{margin:0;padding:0;box-sizing:border-box}
 #simu-valo{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#fafafa;color:#1e1e1e;line-height:1.6;padding:20px}
-#simu-valo .proof{max-width:800px;margin:0 auto 24px;padding:24px;background:#fff;border:1px solid #e5e5e5;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.05)}
-#simu-valo .proof-head{text-align:center;margin-bottom:20px}
+#simu-valo .proof{max-width:800px;margin:0 auto 24px;padding:20px 24px;text-align:center;background:#fff;border:1px solid #e5e5e5;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.05)}
 #simu-valo .proof-name{font-size:18px;font-weight:700;color:#1e1e1e}
 #simu-valo .proof-sub{font-size:14px;color:#555;margin-top:4px}
 #simu-valo .proof-rating{display:inline-block;margin-top:10px;font-size:14px;font-weight:600;color:#1e1e1e;text-decoration:none;background:#fafef0;border:1px solid #c4e913;border-radius:999px;padding:6px 14px;transition:all .3s}
 #simu-valo .proof-rating:hover{background:#c4e913}
-#simu-valo .proof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-#simu-valo .proof-card{background:#fafafa;border-left:4px solid #c4e913;border-radius:8px;padding:16px}
-#simu-valo .proof-quote{font-size:13px;line-height:1.6;color:#1e1e1e;margin:0 0 10px}
-#simu-valo .proof-author{font-size:12px;font-weight:600;color:#555;margin:0}
 #simu-valo .container{max-width:800px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden}
 #simu-valo header{background:#1e1e1e;color:#fff;padding:32px 24px;text-align:center}
 #simu-valo header h1{font-size:24px;font-weight:600;margin-bottom:8px}
@@ -101,7 +96,6 @@
 #simu-valo .spinner{display:inline-block;width:16px;height:16px;border:2px solid #1e1e1e;border-radius:50%;border-top-color:transparent;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:640px){#simu-valo .valuation-range,#simu-valo .cta-section,#simu-valo .button-group{flex-direction:column}
-#simu-valo .proof-grid{grid-template-columns:1fr}
 #simu-valo .progress-step{font-size:10px;padding:12px 4px}
 #simu-valo .narrative-tabs,#simu-valo .narrative-roles{flex-wrap:wrap}
 }
