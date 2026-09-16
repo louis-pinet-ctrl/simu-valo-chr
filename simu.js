@@ -106,11 +106,38 @@ const profil=document.getElementById('profil_utilisateur').value,
 nom=document.getElementById('nom').value.trim(),
 prenom=document.getElementById('prenom').value.trim(),
 tel=document.getElementById('telephone').value.trim(),
-email=document.getElementById('email').value.trim();
+email=document.getElementById('email').value.trim().toLowerCase();
 if(!profil){showErr('Merci de sélectionner votre profil');return false}
 if(!nom||!prenom||!tel||!email){showErr('Tous les champs sont obligatoires');return false}
-if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr('Email invalide');return false}}
+const ctrl=controlerContact(nom,prenom,tel,email);
+if(ctrl.bloquant){showErr(ctrl.bloquant);return false}
+if(ctrl.douteux){const sig=[nom,prenom,tel,email].join('|');
+if(sig!==contactAvertiSig){contactAvertiSig=sig;showErr(ctrl.douteux);return false}}}
 return true}
+// Contrôle de vraisemblance des coordonnées. Bloquant : format impossible ou adresse jetable.
+// Douteux : nom ou adresse sans voyelle, l'utilisateur est invité à vérifier, un second clic passe.
+let contactAvertiSig='';
+const DOMAINES_JETABLES=['yopmail.com','yopmail.fr','yopmail.net','mailinator.com','guerrillamail.com','10minutemail.com','temp-mail.org','tempmail.com','tempr.email','jetable.org','jetable.fr.nf','trashmail.com','throwawaymail.com','getnada.com','dispostable.com','maildrop.cc','sharklasers.com','mohmal.com','fakeinbox.com','mytemp.email','emailondeck.com','spam4.me','mailnesia.com','tempmailo.com','example.com','exemple.com','test.com','test.fr'];
+const LOCAUX_INTERDITS=['test','tests','aaa','aaaa','abc','abcd','azerty','qwerty','asdf','asdfgh','email','mail','exemple','example','xxx','xxxx','nom','prenom','toto','tata','titi'];
+function normTel(t){let n=String(t).replace(/[\s.\-()]/g,'');if(n.startsWith('0033'))n='+33'+n.slice(4);if(/^\+33[1-9]\d{8}$/.test(n))n='0'+n.slice(3);return n}
+function sansVoyelle(m){return m.length>=2&&!/[aeiouyàâäéèêëîïôöùûüÿ]/i.test(m)}
+function controlerContact(nom,prenom,tel,email){
+const t=normTel(tel);
+if(!/^0[1-9]\d{8}$/.test(t))return{bloquant:'Numéro de téléphone invalide : 10 chiffres attendus, ex. 06 12 34 56 78'};
+const c=t.slice(1);
+if(/^(\d)\1{8}$/.test(c)||/^\d(\d)\1{7}$/.test(c)||/^(\d\d)\1{3}\d$/.test(c)||['123456789','987654321','012345678','111222333','102030405'].includes(c)||t==='0612345678')
+return{bloquant:'Ce numéro de téléphone ne semble pas réel. Merci de saisir un numéro joignable.'};
+const m=email.match(/^([a-z0-9._%+-]+)@((?:[a-z0-9-]+\.)+[a-z]{2,})$/);
+if(!m)return{bloquant:'Adresse email invalide, ex. prenom.nom@domaine.fr'};
+const local=m[1],domaine=m[2];
+if(DOMAINES_JETABLES.includes(domaine))return{bloquant:'Les adresses email temporaires ne sont pas acceptées. Merci d\'indiquer votre adresse habituelle.'};
+if(LOCAUX_INTERDITS.includes(local.replace(/[^a-z]/g,'')))return{bloquant:'Cette adresse email ne semble pas réelle. Merci d\'indiquer votre adresse habituelle.'};
+const doutes=[];
+const nomOk=n=>/^[a-zà-ÿ' -]+$/i.test(n)&&!sansVoyelle(n.replace(/[^a-zà-ÿ]/gi,''))&&!/^(azerty|qwerty|asdf|test|toto|xxx+|aaa+)/i.test(n);
+if(!nomOk(nom)||!nomOk(prenom))doutes.push('votre nom et votre prénom');
+if(local.split(/[._%+-]/).some(seg=>/^[a-z]{6,}$/.test(seg)&&sansVoyelle(seg)))doutes.push('votre adresse email');
+if(doutes.length)return{douteux:'Merci de vérifier '+doutes.join(' et ')+' avant de continuer. Cliquez à nouveau pour confirmer.'};
+return{}}
 function showErr(m){const e=document.getElementById('contact-error');e.textContent=m;e.style.display='block';
 setTimeout(()=>e.style.display='none',5000)}
 document.addEventListener('change',e=>{if(e.target.type==='radio'){const name=e.target.name;
@@ -479,8 +506,19 @@ const adjData=applyAdj(baseResult.mediane,data);
 const adjFactor=1+(adjData.totalPct/100);
 const finalResult={basse:Math.round(baseResult.basse*adjFactor),
 mediane:Math.round(baseResult.mediane*adjFactor),haute:Math.round(baseResult.haute*adjFactor)};
+sendLead(contactData,data,finalResult);
 await sendEmail(contactData,data,finalResult);
 setTimeout(()=>{const checklist=genChecklist(data);
 renderResults(finalResult,caResult,ebeResult,adjData,checklist)},1000)}
 function formatEuro(amount){return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(amount)}
+// Remontée du lead vers Supabase (puis Brevo), une seule fois par simulation et seulement après validation.
+const LEAD_ENDPOINT='https://tcnzmfcmihwzoaaffgfz.supabase.co/functions/v1/leads-site?src=simulateur';
+let leadEnvoye=false;
+function sendLead(c,d,f){if(leadEnvoye)return;leadEnvoye=true;
+const corps={...c,ca_n:d.ca_n,ca_n1:d.ca_n1,ca_n2:d.ca_n2,ebe:d.ebe,loyer:d.loyer,nb_salaries:d.nb_salaries,
+segment:d.segment,localisation:d.localisation,terrasse:d.terrasse,bail_duree:d.bail_duree,destination:d.destination,
+agrement_fdc:d.agrement_fdc,agrement_dab:d.agrement_dab,indexation:d.indexation,derniere_revision:d.derniere_revision,
+extraction:d.extraction,loyer_marche:d.loyer_marche,conformite:d.conformite,litiges:d.litiges,licence:d.licence,dettes:d.dettes,
+valorisation_basse:f.basse,valorisation_med:f.mediane,valorisation_haute:f.haute};
+try{fetch(LEAD_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(corps),keepalive:true}).catch(()=>{})}catch(e){}}
 function reset(){localStorage.removeItem('simulator_data');location.reload()}
