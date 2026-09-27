@@ -357,7 +357,7 @@ document.querySelectorAll('.narrative-tabs').forEach(t=>t.style.display=t.datase
 switchNarrative(role==='repreneur'?'analyse':'complet')}
 const AVERTISSEMENT_MODELE=`---
 Modèle indicatif généré automatiquement par le simulateur de valorisation de Louis Pinet, avocat des restaurateurs. Il ne constitue ni une évaluation, ni un conseil juridique, ni une offre engageante. À faire relire par un avocat avant tout envoi.
-Prendre rendez-vous : https://calendly.com/contact-louispinetavocat/30min`;
+Prendre rendez-vous : https://calendly.com/louispinet_avocatdesrestaurateurs/30min`;
 function texteExport(){return narrativeText+'\n\n'+AVERTISSEMENT_MODELE}
 function copyNarrative(){navigator.clipboard.writeText(texteExport()).then(()=>{
 const s=document.getElementById('copy-success');s.classList.add('show');
