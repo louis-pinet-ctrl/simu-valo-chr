@@ -5,6 +5,8 @@ let currentStep=1,calculationData={},narrativeText='',currentNarrativeType='comp
 function toNum(v){if(v==null)return 0;v=String(v).replace(/[\s\u00a0\u202f€]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.');const n=parseFloat(v);return isFinite(n)&&n>0?n:0}
 function num(id){return toNum(document.getElementById(id).value)}
 function stepErr(s,m){const e=document.getElementById('step'+s+'-error');if(!e){alert(m);return}e.textContent=m;e.style.display='block';e.scrollIntoView({block:'nearest'});clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',6000)}
+// Lien de prise de rendez-vous : il s'applique aussi au bouton du HTML colle dans Webflow, sans avoir a le recoller
+const CALENDLY_URL='https://calendly.com/louispinet_avocatdesrestaurateurs/30min';
 const COUT_ETP={brasserie:3200,traditionnel:3500,fastfood:2800,gastronomique:4000,darkkitchen:2500};
 function calcMS(n,seg){return Math.round(n*(COUT_ETP[seg]||3500)*12)}
 function calcRatioMS(n,ca,seg){return n<=0||ca<=0?0:(calcMS(n,seg)/ca*100)}
@@ -22,6 +24,7 @@ if(data.ebe)document.getElementById('ebe').value=data.ebe;
 if(data.loyer)document.getElementById('loyer').value=data.loyer;
 if(data.nb_salaries)document.getElementById('nb_salaries').value=data.nb_salaries}}catch(e){}}
 document.addEventListener('DOMContentLoaded',function(){
+document.querySelectorAll('#simu-valo a[href*="calendly.com"]').forEach(a=>{a.href=CALENDLY_URL});
 loadFromLocalStorage();
 ['ca_n','ca_n1','ca_n2','ebe','loyer','nb_salaries'].forEach(id=>
 document.getElementById(id).addEventListener('input',saveToLocalStorage));
@@ -357,7 +360,7 @@ document.querySelectorAll('.narrative-tabs').forEach(t=>t.style.display=t.datase
 switchNarrative(role==='repreneur'?'analyse':'complet')}
 const AVERTISSEMENT_MODELE=`---
 Modèle indicatif généré automatiquement par le simulateur de valorisation de Louis Pinet, avocat des restaurateurs. Il ne constitue ni une évaluation, ni un conseil juridique, ni une offre engageante. À faire relire par un avocat avant tout envoi.
-Prendre rendez-vous : https://calendly.com/louispinet_avocatdesrestaurateurs/30min`;
+Prendre rendez-vous : ${CALENDLY_URL}`;
 function texteExport(){return narrativeText+'\n\n'+AVERTISSEMENT_MODELE}
 function copyNarrative(){navigator.clipboard.writeText(texteExport()).then(()=>{
 const s=document.getElementById('copy-success');s.classList.add('show');
